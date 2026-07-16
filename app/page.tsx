@@ -1,22 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   formatTripDateRange,
   getTripStatus,
-  loadTrips,
-  type Trip,
 } from "@/app/lib/trips";
+import { useTrips } from "@/app/lib/use-trips";
 
 export default function Home() {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setTrips(loadTrips());
-    setIsLoaded(true);
-  }, []);
+  const { trips, isLoaded } = useTrips();
 
   return (
     <main className="min-h-screen bg-stone-50 text-stone-900">
@@ -33,7 +25,7 @@ export default function Home() {
         <div className="flex items-center justify-between gap-4 border-b border-stone-300 pb-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">あなたの旅行</h1>
-            {isLoaded && trips.length > 0 && (
+            {trips.length > 0 && (
               <p className="mt-1 text-sm text-stone-500">{trips.length}件の旅行ノート</p>
             )}
           </div>
@@ -69,7 +61,8 @@ export default function Home() {
               const status = getTripStatus(trip);
 
               return (
-                <li key={trip.id} className="py-5 sm:py-6">
+                <li key={trip.id}>
+                  <Link href={`/trips/${trip.id}`} className="block py-5 transition-colors hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 sm:px-2 sm:py-6">
                   <article className="grid gap-3 sm:grid-cols-[9rem_1fr_auto] sm:items-start sm:gap-6">
                     <p className="text-sm font-medium tabular-nums text-stone-600">
                       {formatTripDateRange(trip.startDate, trip.endDate)}
@@ -89,6 +82,7 @@ export default function Home() {
                       {status.label}
                     </span>
                   </article>
+                  </Link>
                 </li>
               );
             })}

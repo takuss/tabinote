@@ -1,3 +1,8 @@
+import { deleteReservationsForTrip } from "@/app/lib/reservations";
+import { deleteRecordsForTrip } from "@/app/lib/records";
+import { deleteSchedulesForTrip } from "@/app/lib/schedules";
+import { canParseStorageText, MAX_STORED_ITEMS } from "@/app/lib/storage-safety";
+
 export type Trip = {
   id: string;
   title: string;
@@ -25,21 +30,55 @@ function isTrip(value: unknown): value is Trip {
   );
 }
 
-export function loadTrips(): Trip[] {
-  try {
-    const saved = window.localStorage.getItem(TRIPS_STORAGE_KEY);
-    if (!saved) return [];
+let cachedTripsSource: string | null | undefined;
+let cachedTrips: Trip[] = [];
 
+export function parseTrips(saved: string | null): Trip[] {
+  if (saved === cachedTripsSource) return cachedTrips;
+  cachedTripsSource = saved;
+  try {
+    if (!canParseStorageText(saved)) return (cachedTrips = []);
     const parsed: unknown = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed.filter(isTrip) : [];
+    cachedTrips = Array.isArray(parsed) ? parsed.slice(0, MAX_STORED_ITEMS).filter(isTrip) : [];
   } catch {
-    return [];
+    cachedTrips = [];
   }
+  return cachedTrips;
+}
+
+export function loadTrips(): Trip[] {
+  try { return parseTrips(window.localStorage.getItem(TRIPS_STORAGE_KEY)); }
+  catch { return []; }
 }
 
 export function saveTrip(trip: Trip) {
   const trips = loadTrips();
+  if (trips.some((savedTrip) => savedTrip.id === trip.id)) {
+    throw new Error("Trip ID already exists");
+  }
   window.localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify([trip, ...trips]));
+}
+
+export function updateTrip(id: string, trip: Trip) {
+  const trips = loadTrips();
+  const index = trips.findIndex((savedTrip) => savedTrip.id === id);
+  if (index === -1) return false;
+
+  const updatedTrips = trips.map((savedTrip) => (savedTrip.id === id ? trip : savedTrip));
+  window.localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(updatedTrips));
+  return true;
+}
+
+export function deleteTrip(id: string) {
+  const trips = loadTrips();
+  const remainingTrips = trips.filter((trip) => trip.id !== id);
+  if (remainingTrips.length === trips.length) return false;
+
+  window.localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(remainingTrips));
+  deleteSchedulesForTrip(id);
+  deleteReservationsForTrip(id);
+  deleteRecordsForTrip(id);
+  return true;
 }
 
 function parseDate(date: string) {
@@ -54,6 +93,10 @@ function formatDate(date: string, includeYear: boolean) {
     day: "numeric",
     weekday: "short",
   }).format(parseDate(date));
+}
+
+export function formatTripDate(date: string) {
+  return formatDate(date, true);
 }
 
 export function formatTripDateRange(startDate: string, endDate: string) {
