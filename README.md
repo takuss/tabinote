@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 旅ノート
 
-## Getting Started
+国内旅行の計画から旅行後の振り返りまでを、一回の旅行単位でまとめて管理するWebアプリです。
 
-First, run the development server:
+予約そのものは、じゃらん、楽天トラベル、交通機関などの外部サービスで行い、旅ノートでは旅行の日程、予約済み情報、現地での記録、支出を整理します。
+
+## 公開URL
+
+[https://tabinote-chi.vercel.app](https://tabinote-chi.vercel.app)
+
+ソースコードは[GitHubリポジトリ](https://github.com/takuss/tabinote)で公開しています。
+
+## コンセプト
+
+旅行前は日程と予約情報を整理し、旅行中は出来事や支出を記録し、旅行後は一回の旅をまとめて振り返れます。情報を用途ごとに別々の場所へ分散させず、一つの旅行ノートとして扱うことを目的としています。
+
+スマートフォンでの利用を優先し、旅行中でも必要な情報を確認・入力しやすい、シンプルで実用的な画面構成にしています。
+
+## 主な機能
+
+- 旅行の作成、編集、削除
+- 旅行ごとの日程管理
+- 外部サービスで予約した宿泊、交通、施設などの予約情報管理
+- 旅先で訪れた場所、出来事、感想などの記録
+- 記録に紐づく支出管理とカテゴリ別集計
+- 日程、予約、記録、支出をまとめた旅行後の「旅のまとめ」
+- `localStorage`を利用したブラウザ内保存
+- スマートフォン優先のレスポンシブ表示
+- Vercelでの公開
+
+このアプリ内で、宿泊施設や交通機関などの予約・決済は行いません。
+
+## 使用技術
+
+- Next.js 16（App Router）
+- React
+- TypeScript
+- Tailwind CSS
+- Web Storage API（`localStorage`）
+- GitHub
+- Vercel
+
+## ローカルでの起動方法
+
+Node.jsとnpmが利用できる環境で、次の手順を実行してください。
+
+1. リポジトリをcloneします。
+
+   ```bash
+   git clone https://github.com/takuss/tabinote.git
+   cd tabinote
+   ```
+
+2. 依存パッケージをインストールします。
+
+   ```bash
+   npm install
+   ```
+
+3. 開発サーバーを起動します。
+
+   ```bash
+   npm run dev
+   ```
+
+4. ブラウザで[http://localhost:3000](http://localhost:3000)を開きます。
+
+本番用ビルドは次のコマンドで確認できます。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## データ保存について
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+現在、旅行データは利用しているブラウザの`localStorage`に保存されます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- データは別の端末やブラウザとは同期されません。
+- ブラウザのサイトデータを削除すると、保存した旅行データも消去されます。
+- 公開サイトに入力した旅行情報や個人データが、このGitHubリポジトリへ保存されることはありません。
+- 重要な情報の恒久的な保管先としては利用せず、予約元サービスの情報も併せて確認してください。
 
-## Learn More
+## 現在の開発状況
 
-To learn more about Next.js, take a look at the following resources:
+旅行の基本情報、日程、予約情報、旅先での記録、支出、旅行後のまとめをブラウザ内で管理できる段階です。クラウド保存、ユーザー登録、写真保存、端末間同期はまだ実装していません。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 今後の候補
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- JSON形式でのバックアップと復元
+- Supabaseによるクラウド保存
+- ログイン機能
+- 写真保存
+- 地図連携
+- PWA対応
+- 複数端末間の同期
 
-## Deploy on Vercel
+これらは今後の候補であり、現時点では未実装です。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ライセンス
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+現時点ではライセンスを設定していません。
