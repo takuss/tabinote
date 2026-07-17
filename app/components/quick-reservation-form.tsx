@@ -1,0 +1,104 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import {
+  createReservationId,
+  RESERVATION_TYPES,
+  saveReservation,
+  validateReservationValues,
+  type Reservation,
+  type ReservationValues,
+} from "@/app/lib/reservations";
+import type { Trip } from "@/app/lib/trips";
+
+type Errors = ReturnType<typeof validateReservationValues> & { date?: string; storage?: string };
+const inputClass = "mt-2 min-h-12 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base text-stone-900 outline-none placeholder:text-stone-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
+
+function getInitialDate(trip: Trip) {
+  const now = new Date();
+  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+  return today >= trip.startDate && today <= trip.endDate ? today : trip.startDate;
+}
+
+export default function QuickReservationForm({ trip }: { trip: Trip }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [initialDate, setInitialDate] = useState(() => getInitialDate(trip));
+  const [errors, setErrors] = useState<Errors>({});
+
+  function openForm() {
+    setInitialDate(getInitialDate(trip));
+    setErrors({});
+    setIsOpen(true);
+  }
+
+  function closeForm() {
+    setErrors({});
+    setIsOpen(false);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const date = String(data.get("quickReservationDate") ?? "");
+    const time = String(data.get("quickReservationTime") ?? "");
+    const values: ReservationValues = {
+      type: String(data.get("quickReservationType") ?? "") as ReservationValues["type"],
+      name: String(data.get("quickReservationName") ?? "").trim(),
+      startAt: time ? `${date}T${time}` : date,
+      endAt: "",
+      provider: "",
+      confirmationNumber: "",
+      reservedBy: "",
+      amount: String(data.get("quickReservationAmount") ?? ""),
+      url: String(data.get("quickReservationUrl") ?? "").trim(),
+      phone: "",
+      memo: String(data.get("quickReservationMemo") ?? "").trim(),
+    };
+    const nextErrors: Errors = validateReservationValues(values);
+    if (!date || date < trip.startDate || date > trip.endDate) nextErrors.date = "旅行期間内の利用日を選択してください。";
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const reservation: Reservation = {
+      ...values,
+      id: createReservationId(),
+      tripId: trip.id,
+      amount: values.amount === "" ? null : Number(values.amount),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    try {
+      saveReservation(reservation);
+      closeForm();
+    } catch {
+      setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" });
+    }
+  }
+
+  if (!isOpen) {
+    return <button type="button" onClick={openForm} aria-expanded="false" className="inline-flex min-h-12 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800">＋予約</button>;
+  }
+
+  return <form onSubmit={handleSubmit} noValidate className="mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">
+    <div className="flex items-center justify-between gap-3"><h3 className="font-bold">予約のクイック追加</h3><span className="text-xs text-stone-500">詳細は保存後に編集できます</span></div>
+    {errors.storage && <p role="alert" className="mt-4 border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800">{errors.storage}</p>}
+    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <Field label="予約種別" error={errors.type} htmlFor="quickReservationType"><select id="quickReservationType" name="quickReservationType" defaultValue="宿泊" aria-invalid={Boolean(errors.type)} className={inputClass}>{RESERVATION_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select></Field>
+      <Field label="予約名" error={errors.name} htmlFor="quickReservationName"><input id="quickReservationName" name="quickReservationName" type="text" autoFocus placeholder="例：京都駅前ホテル" aria-invalid={Boolean(errors.name)} className={inputClass} /></Field>
+      <Field label="利用日" error={errors.date} htmlFor="quickReservationDate"><input id="quickReservationDate" name="quickReservationDate" type="date" min={trip.startDate} max={trip.endDate} defaultValue={initialDate} aria-invalid={Boolean(errors.date)} className={inputClass} /></Field>
+      <Field label="時刻" optional htmlFor="quickReservationTime"><input id="quickReservationTime" name="quickReservationTime" type="time" className={inputClass} /></Field>
+      <Field label="金額" optional error={errors.amount} htmlFor="quickReservationAmount"><div className="relative"><input id="quickReservationAmount" name="quickReservationAmount" type="number" inputMode="numeric" min="0" step="1" aria-invalid={Boolean(errors.amount)} className={`${inputClass} pr-10`} /><span className="absolute bottom-3 right-3 text-sm text-stone-500">円</span></div></Field>
+      <Field label="予約URL" optional error={errors.url} htmlFor="quickReservationUrl"><input id="quickReservationUrl" name="quickReservationUrl" type="url" placeholder="https://" aria-invalid={Boolean(errors.url)} className={inputClass} /></Field>
+    </div>
+    <div className="mt-4"><Field label="メモ" optional htmlFor="quickReservationMemo"><textarea id="quickReservationMemo" name="quickReservationMemo" rows={3} placeholder="キャンセル条件など" className={`${inputClass} resize-y`} /></Field></div>
+    <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</button><button type="submit" className="min-h-12 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">保存する</button></div>
+  </form>;
+}
+
+function Field({ label, optional = false, error, htmlFor, children }: { label: string; optional?: boolean; error?: string; htmlFor: string; children: React.ReactNode }) {
+  return <div><label htmlFor={htmlFor} className="text-sm font-bold text-stone-800">{label}<span className={`ml-2 text-xs font-normal ${optional ? "text-stone-500" : "text-red-700"}`}>{optional ? "任意" : "必須"}</span></label>{children}{error && <p role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}</div>;
+}
