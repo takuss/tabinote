@@ -5,6 +5,7 @@ import QuickExpenseForm from "@/app/components/quick-expense-form";
 import QuickReservationForm from "@/app/components/quick-reservation-form";
 import QuickScheduleForm from "@/app/components/quick-schedule-form";
 import type { Trip } from "@/app/lib/trips";
+import { OPEN_QUICK_ADD_EVENT } from "@/app/components/bottom-navigation";
 
 type AddKind = "schedule" | "expense" | "reservation";
 type AddOption = { kind: AddKind; label: string; description: string; icon: ReactNode };
@@ -19,8 +20,18 @@ export default function QuickAddLauncher({ trip }: { trip: Trip }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeKind, setActiveKind] = useState<AddKind | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const externalTriggerRef = useRef<HTMLElement | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const formRegionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function openFromNavigation(event: Event) {
+      externalTriggerRef.current = (event as CustomEvent<{ trigger?: HTMLElement }>).detail?.trigger ?? null;
+      setIsMenuOpen(true);
+    }
+    window.addEventListener(OPEN_QUICK_ADD_EVENT, openFromNavigation);
+    return () => window.removeEventListener(OPEN_QUICK_ADD_EVENT, openFromNavigation);
+  }, []);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -32,7 +43,7 @@ export default function QuickAddLauncher({ trip }: { trip: Trip }) {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
-        window.requestAnimationFrame(() => triggerRef.current?.focus());
+        window.requestAnimationFrame(() => (externalTriggerRef.current ?? triggerRef.current)?.focus());
         return;
       }
       if (event.key !== "Tab" || !sheet) return;
@@ -53,7 +64,7 @@ export default function QuickAddLauncher({ trip }: { trip: Trip }) {
 
   function closeMenu({ restoreFocus = true } = {}) {
     setIsMenuOpen(false);
-    if (restoreFocus) window.requestAnimationFrame(() => triggerRef.current?.focus());
+    if (restoreFocus) window.requestAnimationFrame(() => (externalTriggerRef.current ?? triggerRef.current)?.focus());
   }
 
   function selectKind(kind: AddKind) {
@@ -68,7 +79,7 @@ export default function QuickAddLauncher({ trip }: { trip: Trip }) {
   return <section aria-labelledby="quick-add-heading" className="border-b border-stone-300 py-6">
     <div className="flex items-center justify-between gap-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-4 sm:px-5">
       <div><h2 id="quick-add-heading" className="font-bold">旅の情報を追加</h2><p className="mt-1 text-sm text-stone-600">予定・支出・予約をここからすぐに登録できます</p></div>
-      <button ref={triggerRef} type="button" onClick={() => setIsMenuOpen(true)} aria-haspopup="dialog" aria-expanded={isMenuOpen} aria-controls="quick-add-sheet" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 text-base font-bold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">＋追加</button>
+      <button ref={triggerRef} type="button" onClick={() => { externalTriggerRef.current = null; setIsMenuOpen(true); }} aria-haspopup="dialog" aria-expanded={isMenuOpen} aria-controls="quick-add-sheet" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 text-base font-bold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">＋追加</button>
     </div>
 
     <div ref={formRegionRef} aria-live="polite">
