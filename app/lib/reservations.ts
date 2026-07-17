@@ -1,4 +1,5 @@
 import { canParseStorageText, MAX_STORED_ITEMS } from "@/app/lib/storage-safety";
+import { createRecordId, deleteRecord, saveRecord, type ExpenseCategory, type RecordType, type TripRecord } from "@/app/lib/records";
 
 export const RESERVATION_TYPES = ["宿泊", "新幹線・鉄道", "飛行機", "高速バス", "レンタカー", "フェリー", "飲食店", "施設・チケット", "その他"] as const;
 export type ReservationType = (typeof RESERVATION_TYPES)[number];
@@ -51,6 +52,47 @@ export function saveReservation(item: Reservation) {
   const items = loadReservations();
   if (items.some((saved) => saved.id === item.id)) throw new Error("Reservation ID already exists");
   writeReservations([...items, item]);
+}
+
+function expenseDetailsForReservation(type: ReservationType): { category: ExpenseCategory; recordType: RecordType } {
+  if (type === "宿泊") return { category: "宿泊", recordType: "宿泊" };
+  if (["新幹線・鉄道", "飛行機", "高速バス", "レンタカー", "フェリー"].includes(type)) {
+    return { category: "交通", recordType: "移動" };
+  }
+  if (type === "飲食店") return { category: "食事", recordType: "食事" };
+  if (type === "施設・チケット") return { category: "観光・チケット", recordType: "観光" };
+  return { category: "その他", recordType: "その他" };
+}
+
+export function saveReservationWithExpense(item: Reservation, addToExpenses: boolean) {
+  saveReservation(item);
+  if (!addToExpenses || item.amount === null) return;
+
+  const { category, recordType } = expenseDetailsForReservation(item.type);
+  const expenseId = createRecordId();
+  const expense: TripRecord = {
+    id: expenseId,
+    tripId: item.tripId,
+    date: item.startAt.slice(0, 10),
+    time: item.startAt.includes("T") ? item.startAt.slice(11, 16) : "",
+    title: `${item.name}（予約）`,
+    place: "",
+    type: recordType,
+    memo: `予約「${item.name}」の支出`,
+    amount: item.amount,
+    expenseCategory: category,
+    paymentMethod: "",
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
+
+  try {
+    saveRecord(expense);
+  } catch (error) {
+    deleteRecord(expenseId);
+    deleteReservation(item.id);
+    throw error;
+  }
 }
 export function updateReservation(id: string, item: Reservation) {
   const items = loadReservations();
