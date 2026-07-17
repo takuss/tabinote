@@ -93,7 +93,7 @@ export default function TripDetailPage() {
             </section>
 
             <ReservationsSection tripId={trip.id} />
-            <RecordsSections tripId={trip.id} />
+            <RecordsSections trip={trip} />
           </>
         )}
       </div>
