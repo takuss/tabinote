@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { TripRecord } from "@/app/lib/records";
+import type { Reservation } from "@/app/lib/reservations";
+import type { Schedule } from "@/app/lib/schedules";
 import { buildTripSummary, type TripDaySummary } from "@/app/lib/trip-summary";
-import { getTripStatus } from "@/app/lib/trips";
+import { formatTripDateRange, getTripStatus, type Trip } from "@/app/lib/trips";
 import { useRecords } from "@/app/lib/use-records";
 import { useReservations } from "@/app/lib/use-reservations";
 import { useSchedules } from "@/app/lib/use-schedules";
@@ -17,117 +19,91 @@ export default function TripSummaryPage() {
   const { schedules, isLoaded: schedulesLoaded } = useSchedules(id);
   const { reservations, isLoaded: reservationsLoaded } = useReservations(id);
   const { records, isLoaded: recordsLoaded } = useRecords(id);
+  const [activeDay, setActiveDay] = useState(0);
   const trip = trips.find((item) => item.id === id);
   const isLoaded = tripsLoaded && schedulesLoaded && reservationsLoaded && recordsLoaded;
-  const summary = useMemo(
-    () => (trip ? buildTripSummary(trip, schedules, reservations, records) : null),
-    [trip, schedules, reservations, records],
-  );
+  const summary = useMemo(() => trip ? buildTripSummary(trip, schedules, reservations, records) : null, [trip, schedules, reservations, records]);
 
-  return (
-    <main className="min-h-screen bg-stone-50 text-stone-900">
-      <header className="border-b border-stone-300 bg-white">
-        <div className="mx-auto flex h-14 max-w-4xl items-center px-4 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight">旅ノート</Link>
-        </div>
-      </header>
-      <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6 sm:py-10">
-        {!isLoaded ? <p className="text-sm text-stone-500">旅のまとめを読み込んでいます…</p> : !trip || !summary ? (
-          <section className="border-b border-stone-300 py-10">
-            <h1 className="text-xl font-bold">旅行が見つかりません</h1>
-            <p className="mt-2 text-sm text-stone-500">削除されたか、URLが正しくない可能性があります。</p>
-            <Link href="/" className="mt-5 inline-flex text-sm font-bold text-teal-800 hover:underline">← 旅行一覧に戻る</Link>
-          </section>
-        ) : <>
-          <header className="border-b border-stone-400 pb-6">
-            <Link href={`/trips/${trip.id}`} className="text-sm font-medium text-teal-800 hover:underline">← 旅行詳細に戻る</Link>
-            <p className="mt-5 text-xs font-bold tracking-widest text-stone-500">旅のまとめ</p>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{trip.title}</h1>
-              <span className={`rounded-sm border px-2 py-1 text-xs font-bold ${getTripStatus(trip).className}`}>{getTripStatus(trip).label}</span>
+  return <main className="min-h-screen bg-stone-100 text-stone-900">
+    <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6"><Link href="/" className="text-lg font-bold tracking-tight">旅ノート</Link>{trip && <Link href={`/trips/${trip.id}`} className="inline-flex min-h-12 items-center text-sm font-bold text-teal-800 hover:underline">旅行詳細へ</Link>}</div></header>
+    <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
+      {!isLoaded ? <p className="py-10 text-sm text-stone-500">旅のまとめを読み込んでいます…</p> : !trip || !summary ? <Missing /> : <>
+        <Hero trip={trip} days={summary.duration.days} />
+
+        <section aria-labelledby="overview-heading" className="py-7 sm:py-9">
+          <SectionHeading id="overview-heading" eyebrow="AT A GLANCE">旅の概要</SectionHeading>
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard icon={<CalendarIcon />} label="予定" value={`${summary.counts.schedules}件`} />
+            <StatCard icon={<TicketIcon />} label="予約" value={`${summary.counts.reservations}件`} />
+            <StatCard icon={<WalletIcon />} label="支出合計" value={yen(summary.expenses.total)} />
+            <StatCard icon={<NoteIcon />} label="記録" value={`${summary.counts.records}件`} />
+          </dl>
+        </section>
+
+        <section aria-labelledby="timeline-heading" className="rounded-2xl bg-white px-4 py-6 shadow-sm sm:px-7 sm:py-8">
+          <SectionHeading id="timeline-heading" eyebrow="TIMELINE">旅のタイムライン</SectionHeading>
+          {summary.days.length === 0 ? <Empty>旅行期間を表示できません</Empty> : <>
+            <div role="tablist" aria-label="旅行日を選択" className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+              {summary.days.map((day, index) => <button key={day.date} type="button" role="tab" id={`day-tab-${index}`} aria-selected={activeDay === index} aria-controls={`day-panel-${index}`} onClick={() => setActiveDay(index)} className={`min-h-12 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${activeDay === index ? "bg-teal-700 text-white" : "border border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}><span>{index + 1}日目</span><span className="ml-2 font-normal opacity-80">{shortDate(day.date)}</span></button>)}
             </div>
-            <p className="mt-2 text-sm text-stone-600">{trip.destination}</p>
-          </header>
+            {summary.days.map((day, index) => activeDay === index && <div key={day.date} role="tabpanel" id={`day-panel-${index}`} aria-labelledby={`day-tab-${index}`} tabIndex={0} className="mt-5 outline-none"><DayTimeline day={day} /></div>)}
+          </>}
+        </section>
 
-          <section aria-labelledby="summary-overview" className="py-7">
-            <SectionTitle id="summary-overview">旅行概要</SectionTitle>
-            <dl className="divide-y divide-stone-200">
-              <Row label="旅行期間" value={`${formatDate(trip.startDate)} — ${formatDate(trip.endDate)}`} />
-              <Row label="泊数・日数" value={`${summary.duration.nights}泊${summary.duration.days}日`} />
-              <Row label="旅行メモ" value={trip.memo || "メモはありません"} preserveLines />
-            </dl>
-          </section>
+        <section aria-labelledby="expense-heading" className="py-7 sm:py-9">
+          <SectionHeading id="expense-heading" eyebrow="EXPENSES">支出の内訳</SectionHeading>
+          {summary.expenses.count === 0 ? <Empty>まだ支出の記録がありません</Empty> : <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm sm:p-7">
+            <div className="flex items-end justify-between gap-4 border-b border-stone-200 pb-5"><div><p className="text-sm text-stone-500">旅行全体</p><p className="mt-1 text-2xl font-bold tabular-nums">{yen(summary.expenses.total)}</p></div><p className="text-sm text-stone-500">{summary.expenses.count}件</p></div>
+            <div className="mt-2 divide-y divide-stone-100">{summary.expenses.categories.map((item) => <div key={item.category} className="py-4"><div className="flex items-baseline justify-between gap-4"><p className="text-sm font-bold">{item.category}</p><p className="text-sm tabular-nums">{yen(item.amount)} <span className="text-stone-400">{item.percentage}%</span></p></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-100" aria-label={`${item.category} ${item.percentage}%`}><div className="h-full rounded-full bg-teal-600" style={{ width: `${item.percentage}%` }} /></div></div>)}</div>
+          </div>}
+        </section>
 
-          <section aria-labelledby="numbers-heading" className="border-t border-stone-300 py-7">
-            <SectionTitle id="numbers-heading">旅行の数字</SectionTitle>
-            <dl className="grid grid-cols-2 border-b border-stone-300 sm:grid-cols-5">
-              <Stat label="予定" value={`${summary.counts.schedules}件`} />
-              <Stat label="予約" value={`${summary.counts.reservations}件`} />
-              <Stat label="記録" value={`${summary.counts.records}件`} />
-              <Stat label="支出合計" value={yen(summary.expenses.total)} />
-              <Stat label="訪れた場所" value={`${summary.counts.places}件`} />
-            </dl>
-          </section>
-
-          <section aria-labelledby="daily-heading" className="border-t border-stone-300 py-7">
-            <SectionTitle id="daily-heading">日別の振り返り</SectionTitle>
-            {summary.days.length === 0 ? <Empty>旅行期間を表示できません</Empty> : (
-              <div className="divide-y divide-stone-400 border-b border-stone-400">
-                {summary.days.map((day, index) => <DayReview key={day.date} day={day} dayNumber={index + 1} />)}
-              </div>
-            )}
-          </section>
-
-          <section aria-labelledby="expense-summary" className="border-t border-stone-300 py-7">
-            <SectionTitle id="expense-summary">支出まとめ</SectionTitle>
-            {summary.expenses.count === 0 ? <Empty>まだ支出の記録がありません</Empty> : <div className="pt-5">
-              <p className="text-sm text-stone-500">旅行全体の支出</p>
-              <p className="mt-1 text-xl font-bold tabular-nums">{yen(summary.expenses.total)}</p>
-              <div className="mt-6 divide-y divide-stone-200 border-y border-stone-300">
-                {summary.expenses.categories.map((item) => <div key={item.category} className="py-4">
-                  <div className="flex items-baseline justify-between gap-4 text-sm"><span className="font-medium">{item.category}</span><span className="tabular-nums">{yen(item.amount)}・{item.percentage}%</span></div>
-                  <div className="mt-2 h-1.5 bg-stone-200" aria-hidden="true"><div className="h-full bg-teal-700" style={{ width: `${item.percentage}%` }} /></div>
-                </div>)}
-              </div>
-            </div>}
-          </section>
-
-          <section aria-labelledby="all-records" className="border-t border-stone-300 py-7">
-            <SectionTitle id="all-records">旅の記録一覧</SectionTitle>
-            {summary.records.length === 0 ? <Empty>まだ旅の記録がありません</Empty> : <ol className="divide-y divide-stone-300 border-b border-stone-300">{summary.records.map((record) => <RecordEntry key={record.id} record={record} />)}</ol>}
-          </section>
-        </>}
-      </div>
-    </main>
-  );
+        <section aria-labelledby="photos-heading" className="pb-8">
+          <SectionHeading id="photos-heading" eyebrow="PHOTOS">旅の写真</SectionHeading>
+          <div className="mt-4 flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-8 text-center"><span className="flex size-12 items-center justify-center rounded-full bg-stone-100 text-stone-500"><PhotoIcon /></span><p className="mt-3 font-bold">写真で旅を振り返る場所</p><p className="mt-1 max-w-sm text-sm leading-6 text-stone-500">写真機能の追加後、この場所に旅行の思い出が並びます。</p></div>
+        </section>
+      </>}
+    </div>
+  </main>;
 }
 
-function DayReview({ day, dayNumber }: { day: TripDaySummary; dayNumber: number }) {
-  const hasData = day.schedules.length || day.reservations.length || day.records.length;
-  return <article className="py-6"><header className="flex items-baseline gap-3"><span className="text-xs font-bold text-teal-800">{dayNumber}日目</span><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <span className="ml-auto text-sm tabular-nums text-stone-600">支出 {yen(day.expenseTotal)}</span>}</header>
-    {!hasData ? <p className="mt-4 text-sm text-stone-500">登録された情報はありません</p> : <div className="mt-4 space-y-5">
-      {day.schedules.length > 0 && <DayGroup title="予定">{day.schedules.map((item) => <CompactItem key={item.id} time={item.startTime} title={item.title} detail={item.place} label={item.type} />)}</DayGroup>}
-      {day.reservations.length > 0 && <DayGroup title="予約">{day.reservations.map((item) => <CompactItem key={item.id} time={timeFromDateTime(item.startAt)} title={item.name} detail={item.provider} label={item.type} />)}</DayGroup>}
-      {day.records.length > 0 && <DayGroup title="記録">{day.records.map((item) => <CompactItem key={item.id} time={item.time || "—"} title={item.title} detail={item.place} label={item.type} />)}</DayGroup>}
-    </div>}
-  </article>;
+function Hero({ trip, days }: { trip: Trip; days: number }) {
+  const status = getTripStatus(trip);
+  return <section className="relative min-h-72 overflow-hidden rounded-2xl bg-gradient-to-br from-teal-900 via-teal-700 to-cyan-600 p-6 text-white shadow-lg sm:min-h-80 sm:p-10">
+    <div className="absolute -right-16 -top-20 size-64 rounded-full border-[36px] border-white/10" aria-hidden="true" /><div className="absolute -bottom-24 left-1/3 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+    <div className="relative flex min-h-60 flex-col justify-between sm:min-h-64"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.25em] text-white/75">TRIP MEMORY</p><span className="rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-bold">{status.label}</span></div><div><p className="text-sm font-medium text-white/80">{trip.destination}</p><h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{trip.title}</h1><div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85"><span>{formatTripDateRange(trip.startDate, trip.endDate)}</span><span className="h-4 w-px bg-white/35" aria-hidden="true" /><span className="font-bold">{days}日間</span></div></div></div>
+  </section>;
 }
 
-function DayGroup({ title, children }: { title: string; children: React.ReactNode }) { return <section className="grid gap-2 sm:grid-cols-[5rem_1fr]"><h4 className="text-sm font-bold text-stone-500">{title}</h4><div className="divide-y divide-stone-200">{children}</div></section>; }
-function CompactItem({ time, title, detail, label }: { time: string; title: string; detail: string; label: string }) { return <div className="grid grid-cols-[3.5rem_1fr] gap-3 py-2 text-sm"><span className="tabular-nums text-stone-500">{time}</span><div><span className="font-medium">{title}</span><span className="ml-2 text-xs text-stone-500">{label}</span>{detail && <p className="mt-0.5 text-stone-500">{detail}</p>}</div></div>; }
+function DayTimeline({ day }: { day: TripDaySummary }) {
+  const items = [
+    ...day.schedules.map((item) => ({ key: `s-${item.id}`, time: item.startTime, node: <ScheduleItem item={item} /> })),
+    ...day.reservations.map((item) => ({ key: `b-${item.id}`, time: timeFromDateTime(item.startAt), node: <ReservationItem item={item} /> })),
+    ...day.records.map((item) => ({ key: `r-${item.id}`, time: item.time, node: <RecordItem item={item} /> })),
+  ].sort((a, b) => (!a.time ? 1 : !b.time ? -1 : a.time.localeCompare(b.time)));
+  return <div><div className="flex items-baseline justify-between gap-4"><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <p className="text-sm tabular-nums text-stone-500">支出 {yen(day.expenseTotal)}</p>}</div>{items.length === 0 ? <Empty>この日の情報はまだありません</Empty> : <ol className="relative mt-4 space-y-3 before:absolute before:bottom-6 before:left-[23px] before:top-6 before:w-px before:bg-stone-200">{items.map((item) => <li key={item.key} className="relative">{item.node}</li>)}</ol>}</div>;
+}
 
-function RecordEntry({ record }: { record: TripRecord }) { return <li className="py-5"><div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="text-sm font-medium tabular-nums text-stone-600">{formatDate(record.date)} {record.time}</span><h3 className="font-bold">{record.title}</h3><span className="text-xs text-stone-500">{record.type}</span></div>{record.place && <p className="mt-2 text-sm text-stone-600">{record.place}</p>}{record.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">{record.memo}</p>}{record.amount !== null && <p className="mt-3 text-sm font-bold tabular-nums">{yen(record.amount)} <span className="font-normal text-stone-500">{record.expenseCategory}</span></p>}</li>; }
-function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) { return <h2 id={id} className="border-b border-stone-300 pb-3 text-lg font-bold">{children}</h2>; }
-function Row({ label, value, preserveLines }: { label: string; value: string; preserveLines?: boolean }) { return <div className="grid gap-1 py-4 sm:grid-cols-[8rem_1fr]"><dt className="text-sm font-medium text-stone-500">{label}</dt><dd className={`text-sm leading-6 ${preserveLines ? "whitespace-pre-wrap" : ""}`}>{value}</dd></div>; }
-function Stat({ label, value }: { label: string; value: string }) { return <div className="border-t border-stone-300 px-3 py-4 first:border-t-0 sm:border-l sm:first:border-l-0 sm:first:border-t"><dt className="text-xs text-stone-500">{label}</dt><dd className="mt-1 font-bold tabular-nums">{value}</dd></div>; }
-function Empty({ children }: { children: React.ReactNode }) { return <p className="py-7 text-sm text-stone-500">{children}</p>; }
+function ScheduleItem({ item }: { item: Schedule }) { return <TimelineItem icon={<CalendarIcon />} tone="teal" label="予定" time={item.startTime || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="終了" value={item.endTime} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
+function ReservationItem({ item }: { item: Reservation }) { return <TimelineItem icon={<TicketIcon />} tone="amber" label="予約" time={timeFromDateTime(item.startAt) || "時刻なし"} title={item.name}><DetailLine label="種別" value={item.type} /><DetailLine label="予約先" value={item.provider} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
+function RecordItem({ item }: { item: TripRecord }) { const isExpense = item.amount !== null; return <TimelineItem icon={isExpense ? <WalletIcon /> : <NoteIcon />} tone={isExpense ? "rose" : "stone"} label={isExpense ? "支出" : item.type === "メモ" ? "メモ" : "記録"} time={item.time || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} /><DetailLine label="カテゴリー" value={item.expenseCategory} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
+
+const tones = { teal: "bg-teal-100 text-teal-800", amber: "bg-amber-100 text-amber-800", rose: "bg-rose-100 text-rose-800", stone: "bg-stone-200 text-stone-700" };
+function TimelineItem({ icon, tone, label, time, title, children }: { icon: ReactNode; tone: keyof typeof tones; label: string; time: string; title: string; children: ReactNode }) { return <details className="group rounded-xl border border-stone-200 bg-stone-50 open:bg-white"><summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-3 py-2 marker:hidden"><span className={`relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full ${tones[tone]}`} aria-hidden="true">{icon}</span><span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-xs text-stone-500"><span>{label}</span><span>·</span><span className="tabular-nums">{time}</span></span><span className="mt-0.5 block truncate font-bold">{title}</span></span><span className="text-xl text-stone-400 transition-transform group-open:rotate-180" aria-hidden="true">⌄</span></summary><div className="border-t border-stone-100 px-4 py-4 pl-[4.75rem]">{children || <p className="text-sm text-stone-500">追加の詳細はありません</p>}</div></details>; }
+function DetailLine({ label, value }: { label: string; value: string }) { return value ? <p className="mt-1 text-sm"><span className="mr-3 text-stone-400">{label}</span>{value}</p> : null; }
+
+function StatCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) { return <div className="rounded-xl bg-white p-4 shadow-sm"><dt className="flex items-center gap-2 text-xs font-bold text-stone-500"><span className="text-teal-700" aria-hidden="true">{icon}</span>{label}</dt><dd className="mt-3 text-xl font-bold tabular-nums sm:text-2xl">{value}</dd></div>; }
+function SectionHeading({ id, eyebrow, children }: { id: string; eyebrow: string; children: ReactNode }) { return <div><p className="text-[0.65rem] font-bold tracking-[0.2em] text-teal-700">{eyebrow}</p><h2 id={id} className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{children}</h2></div>; }
+function Missing() { return <section className="py-10"><h1 className="text-xl font-bold">旅行が見つかりません</h1><p className="mt-2 text-sm text-stone-500">削除されたか、URLが正しくない可能性があります。</p><Link href="/" className="mt-5 inline-flex min-h-12 items-center text-sm font-bold text-teal-800 hover:underline">← 旅行一覧に戻る</Link></section>; }
+function Empty({ children }: { children: ReactNode }) { return <p className="py-7 text-sm text-stone-500">{children}</p>; }
 function yen(amount: number) { return `${new Intl.NumberFormat("ja-JP").format(amount)}円`; }
-function timeFromDateTime(value: string) { return value.slice(11, 16) || "—"; }
-function formatDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return value || "日付不明";
-  const year = Number(match[1]); const month = Number(match[2]); const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return value;
-  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).format(date);
-}
+function timeFromDateTime(value: string) { return value.includes("T") ? value.slice(11, 16) : ""; }
+function shortDate(value: string) { const [, month, day] = value.split("-"); return `${Number(month)}/${Number(day)}`; }
+function formatDate(value: string) { const [year, month, day] = value.split("-").map(Number); const date = new Date(year, month - 1, day); return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "short" }).format(date) : value; }
+
+const iconClass = "size-5";
+function CalendarIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /><path d="M8 13h3v3H8z" /></svg>; }
+function WalletIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 6h14a2 2 0 0 1 2 2v11H5a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h11" /><path d="M15 11h6v5h-6a2.5 2.5 0 0 1 0-5Z" /></svg>; }
+function TicketIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4V5Z" /><path d="M12 7v2m0 2v2m0 2v2" /></svg>; }
+function NoteIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M5 3h11l3 3v15H5V3Z" /><path d="M8 10h8M8 14h8M8 18h5" /></svg>; }
+function PhotoIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-6"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m5 17 4-4 3 3 2-2 5 3" /></svg>; }
