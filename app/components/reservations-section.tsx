@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { deleteReservation, sortReservations, type Reservation } from "@/app/lib/reservations";
 import { useReservations } from "@/app/lib/use-reservations";
-import QuickReservationForm from "@/app/components/quick-reservation-form";
 import type { Trip } from "@/app/lib/trips";
 
 export default function ReservationsSection({ trip }: { trip: Trip }) {
@@ -34,7 +33,6 @@ export default function ReservationsSection({ trip }: { trip: Trip }) {
         <h2 id="reservations-heading" className="text-lg font-bold">予約</h2>
         <Link href={`/trips/${tripId}/reservations/new`} className="inline-flex min-h-12 items-center text-sm font-bold text-teal-800 hover:underline">詳細入力</Link>
       </div>
-      <QuickReservationForm trip={trip} />
       {!isLoaded ? <p className="py-6 text-sm text-stone-500">予約情報を読み込んでいます…</p> : reservations.length === 0 ? <p className="py-7 text-sm text-stone-500">まだ予約情報がありません</p> : (
         <><div className="flex items-baseline justify-between border-b border-stone-200 py-5"><p className="text-sm text-stone-500">予約金額の合計</p><p className="text-xl font-bold tabular-nums">{new Intl.NumberFormat("ja-JP").format(totalAmount)}円</p></div><ol className="divide-y divide-stone-300">
           {sortedReservations.map((item) => (

@@ -29,20 +29,13 @@ function toRecordType(category: QuickCategory): RecordType {
   return category;
 }
 
-export default function QuickExpenseForm({ trip }: { trip: Trip }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [initialValues, setInitialValues] = useState(() => getInitialValues(trip));
-
-  function openForm() {
-    setInitialValues(getInitialValues(trip));
-    setErrors({});
-    setIsOpen(true);
-  }
+  const [initialValues] = useState(() => getInitialValues(trip));
 
   function closeForm() {
     setErrors({});
-    setIsOpen(false);
+    onClose();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -86,10 +79,6 @@ export default function QuickExpenseForm({ trip }: { trip: Trip }) {
     } catch {
       setErrors({ storage: "支出を保存できませんでした。ブラウザの設定を確認してください。" });
     }
-  }
-
-  if (!isOpen) {
-    return <button type="button" onClick={openForm} aria-expanded="false" className="inline-flex min-h-11 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800">＋支出</button>;
   }
 
   return <form onSubmit={handleSubmit} noValidate className="mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">

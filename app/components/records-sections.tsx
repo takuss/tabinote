@@ -5,7 +5,6 @@ import { deleteRecord, sortRecords, summarizeExpenses, type TripRecord } from "@
 import { useRecords } from "@/app/lib/use-records";
 import { formatTripDate } from "@/app/lib/trips";
 import type { Trip } from "@/app/lib/trips";
-import QuickExpenseForm from "@/app/components/quick-expense-form";
 
 export default function RecordsSections({ trip }: { trip: Trip }) {
   const tripId = trip.id;
@@ -19,7 +18,6 @@ export default function RecordsSections({ trip }: { trip: Trip }) {
     </section>
     <section aria-labelledby="expenses-heading" className="border-t border-stone-300 py-7">
       <SectionHeading id="expenses-heading" title="支出" href={`/trips/${tripId}/records/new`} linkLabel="詳細入力" />
-      <QuickExpenseForm trip={trip} />
       {!isLoaded ? <Empty>支出を読み込んでいます…</Empty> : summary.count === 0 ? <Empty>まだ支出の記録がありません</Empty> : <div className="py-5"><p className="text-sm text-stone-500">支出合計</p><p className="mt-1 text-2xl font-bold tabular-nums">{yen(summary.total)}</p><dl className="mt-5 divide-y divide-stone-200 border-t border-stone-300">{summary.byCategory.map(({ category, amount }) => <div key={category} className="flex items-center justify-between py-3 text-sm"><dt>{category}</dt><dd className="font-medium tabular-nums">{yen(amount)}</dd></div>)}</dl></div>}
     </section>
   </>;

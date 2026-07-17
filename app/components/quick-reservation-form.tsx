@@ -20,20 +20,13 @@ function getInitialDate(trip: Trip) {
   return today >= trip.startDate && today <= trip.endDate ? today : trip.startDate;
 }
 
-export default function QuickReservationForm({ trip }: { trip: Trip }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [initialDate, setInitialDate] = useState(() => getInitialDate(trip));
+export default function QuickReservationForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
+  const [initialDate] = useState(() => getInitialDate(trip));
   const [errors, setErrors] = useState<Errors>({});
-
-  function openForm() {
-    setInitialDate(getInitialDate(trip));
-    setErrors({});
-    setIsOpen(true);
-  }
 
   function closeForm() {
     setErrors({});
-    setIsOpen(false);
+    onClose();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -77,10 +70,6 @@ export default function QuickReservationForm({ trip }: { trip: Trip }) {
     } catch {
       setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" });
     }
-  }
-
-  if (!isOpen) {
-    return <button type="button" onClick={openForm} aria-expanded="false" className="inline-flex min-h-12 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800">＋予約</button>;
   }
 
   return <form onSubmit={handleSubmit} noValidate className="mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">

@@ -39,21 +39,14 @@ function getTripDates(startDate: string, endDate: string) {
   return dates;
 }
 
-export default function QuickScheduleForm({ trip }: { trip: Trip }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [initialValues, setInitialValues] = useState(() => getInitialValues(trip));
+  const [initialValues] = useState(() => getInitialValues(trip));
   const tripDates = getTripDates(trip.startDate, trip.endDate);
-
-  function openForm() {
-    setInitialValues(getInitialValues(trip));
-    setErrors({});
-    setIsOpen(true);
-  }
 
   function cancel() {
     setErrors({});
-    setIsOpen(false);
+    onClose();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -93,14 +86,10 @@ export default function QuickScheduleForm({ trip }: { trip: Trip }) {
     try {
       saveSchedule(schedule);
       setErrors({});
-      setIsOpen(false);
+      onClose();
     } catch {
       setErrors({ storage: "予定を保存できませんでした。ブラウザの設定を確認してください。" });
     }
-  }
-
-  if (!isOpen) {
-    return <button type="button" onClick={openForm} aria-expanded="false" className="inline-flex min-h-11 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800">＋予定</button>;
   }
 
   return (

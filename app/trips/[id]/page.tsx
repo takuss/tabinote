@@ -9,7 +9,7 @@ import { deleteTrip, formatTripDate, getTripStatus } from "@/app/lib/trips";
 import { useTrips } from "@/app/lib/use-trips";
 import ReservationsSection from "@/app/components/reservations-section";
 import RecordsSections from "@/app/components/records-sections";
-import QuickScheduleForm from "@/app/components/quick-schedule-form";
+import QuickAddLauncher from "@/app/components/quick-add-launcher";
 
 
 export default function TripDetailPage() {
@@ -66,6 +66,8 @@ export default function TripDetailPage() {
               </div>
             </div>
 
+            <QuickAddLauncher trip={trip} />
+
             <section aria-labelledby="overview-heading" className="py-7">
               <h2 id="overview-heading" className="border-b border-stone-300 pb-3 text-lg font-bold">概要</h2>
               <dl className="divide-y divide-stone-200">
@@ -82,7 +84,6 @@ export default function TripDetailPage() {
                 <h2 id="schedule-heading" className="text-lg font-bold">日程</h2>
                 <Link href={`/trips/${trip.id}/schedule/new`} className="inline-flex min-h-11 items-center text-sm font-bold text-teal-800 hover:underline">詳細入力</Link>
               </div>
-              <QuickScheduleForm trip={trip} />
               {!schedulesLoaded ? (
                 <p className="py-6 text-sm text-stone-500">予定を読み込んでいます…</p>
               ) : schedules.length === 0 ? (
