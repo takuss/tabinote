@@ -131,3 +131,14 @@ export function getTripStatus(trip: Trip) {
     className: "border-stone-300 bg-stone-100 text-stone-600",
   };
 }
+
+export type TripExperience = "plan" | "today" | "memories";
+export function getTripExperience(trip: Trip, now = new Date()): TripExperience {
+  const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (local < trip.startDate) return "plan";
+  if (local <= trip.endDate) return "today";
+  return "memories";
+}
+export function getTripExperiencePath(trip: Trip, experience = getTripExperience(trip)) {
+  return experience === "today" ? `/trips/${trip.id}/today` : experience === "memories" ? `/trips/${trip.id}/summary` : `/trips/${trip.id}`;
+}

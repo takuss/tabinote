@@ -1,36 +1,5 @@
 "use client";
-
-import Link from "next/link";
-import BackupManager from "@/app/components/backup-manager";
-import CoverPhotoImage from "@/app/components/cover-photo-image";
-import { EmptyState, StatusBadge, primaryButtonClass } from "@/app/components/ui";
-import { getTripDuration } from "@/app/lib/trip-summary";
-import { formatTripDateRange, getTripStatus } from "@/app/lib/trips";
-import { useTrips } from "@/app/lib/use-trips";
-
-export default function Home() {
-  const { trips, isLoaded } = useTrips();
-  return <main className="min-h-screen bg-stone-100 text-stone-900">
-    <header className="bg-white"><div className="mx-auto max-w-5xl px-4 py-5 sm:px-6"><p className="text-xs font-bold tracking-[0.18em] text-teal-700">YOUR TRIPS</p><div className="mt-1 flex items-end justify-between gap-4"><div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">旅ノート</h1><p className="mt-1 text-sm text-stone-500">旅の予定と思い出を、ひとつに。</p></div><Link href="/trips/new" className={`${primaryButtonClass} shrink-0`}><span aria-hidden="true" className="mr-1 text-lg">＋</span>新しい旅行</Link></div></div></header>
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-      {!isLoaded ? <p className="py-12 text-center text-sm text-stone-500">旅行を読み込んでいます…</p> : trips.length === 0 ? <div className="rounded-2xl bg-white px-5"><EmptyState title="最初の旅を記録しましょう" description="旅行を作ると、予定・予約・支出・思い出をまとめられます。" action={<Link href="/trips/new" className={primaryButtonClass}>旅行を作る</Link>} /></div> : <>
-        <div className="mb-4 flex items-baseline justify-between"><h2 className="text-lg font-bold">あなたの旅行</h2><p className="text-xs text-stone-400">{trips.length}件</p></div>
-        <ol className="grid gap-5 sm:grid-cols-2">{trips.map((trip, index) => {
-          const status = getTripStatus(trip);
-          const duration = getTripDuration(trip.startDate, trip.endDate);
-          return <li key={trip.id}><Link href={`/trips/${trip.id}`} className="group block overflow-hidden rounded-2xl bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><article>
-            <div className="relative flex aspect-video w-full flex-col justify-between overflow-hidden bg-teal-800 p-5 text-white">
-              <CoverPhotoImage tripId={trip.id} alt={`${trip.title}の表紙写真`} />
-              <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
-              <div className="absolute -right-10 -top-12 size-40 rounded-full border-[24px] border-white/10" aria-hidden="true" />
-              <p className="relative text-xs font-bold tracking-widest text-white/70">TRIP {String(index + 1).padStart(2, "0")}</p>
-              <div className="relative min-w-0"><h3 className="line-clamp-2 text-xl font-bold leading-tight sm:text-2xl">{trip.title}</h3><p className="mt-2 truncate text-sm text-white/75">{formatTripDateRange(trip.startDate, trip.endDate)}</p></div>
-            </div>
-            <div className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-bold">{trip.destination}</p><p className="mt-1 text-sm text-stone-500">{duration.days}日間</p></div><StatusBadge className={status.className}>{status.label}</StatusBadge></div><p className="mt-4 text-sm font-bold text-teal-700 group-hover:underline">旅行を開く <span aria-hidden="true">→</span></p></div>
-          </article></Link></li>;
-        })}</ol>
-      </>}
-      <BackupManager />
-    </div>
-  </main>;
-}
+import Link from "next/link"; import BackupManager from "@/app/components/backup-manager"; import CoverPhotoImage from "@/app/components/cover-photo-image"; import { EmptyState, StatusBadge, primaryButtonClass } from "@/app/components/ui"; import { getTripDuration } from "@/app/lib/trip-summary"; import { formatTripDateRange, getTripExperience, getTripExperiencePath, getTripStatus, type Trip } from "@/app/lib/trips"; import { useTrips } from "@/app/lib/use-trips"; import { useSchedules } from "@/app/lib/use-schedules"; import { useTransports } from "@/app/lib/use-transports"; import { useRecords } from "@/app/lib/use-records"; import { sortSchedules } from "@/app/lib/schedules"; import { sortTransports } from "@/app/lib/transports";
+export default function Home(){const{trips,isLoaded}=useTrips();return <main className="min-h-screen bg-stone-100 text-stone-900"><header className="bg-white"><div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-5 sm:px-6"><h1 className="text-2xl font-bold tracking-tight">旅ノート</h1><Link href="/trips/new" className={`${primaryButtonClass} shrink-0`}><span aria-hidden="true">＋</span> 新しい旅行</Link></div></header><div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{!isLoaded?<p className="py-12 text-center text-sm text-stone-500">旅行を読み込んでいます…</p>:!trips.length?<div className="rounded-2xl bg-white px-5"><EmptyState title="最初の旅を記録しましょう" description="旅行を作ると、計画から思い出までひとつにまとまります。" action={<Link href="/trips/new" className={primaryButtonClass}>旅行を作る</Link>}/></div>:<><div className="mb-4 flex items-baseline justify-between"><h2 className="text-lg font-bold">次に開く旅行</h2><p className="text-xs text-stone-400">{trips.length}件</p></div><ol className="grid gap-5 sm:grid-cols-2">{trips.map(trip=><TripCard key={trip.id} trip={trip}/>)}</ol></>}<BackupManager/></div></main>}
+function TripCard({trip}:{trip:Trip}){const experience=getTripExperience(trip),status=getTripStatus(trip),duration=getTripDuration(trip.startDate,trip.endDate),{schedules}=useSchedules(trip.id),{transports}=useTransports(trip.id),{records}=useRecords(trip.id);const firstTransport=sortTransports(transports)[0],firstSchedule=sortSchedules(schedules)[0],next=firstTransport?`${firstTransport.departureTime} ${firstTransport.departurePlace} → ${firstTransport.arrivalPlace}`:firstSchedule?`${firstSchedule.startTime} ${firstSchedule.title}`:"最初の予定を追加しましょう";const message=experience==="plan"?`${daysUntil(trip.startDate)}・${next}`:experience==="today"?`${tripDay(trip.startDate)}日目・${next}`:`${duration.days}日間・思い出 ${records.length}件`;const action=experience==="plan"?"計画を見る":experience==="today"?"今日の旅程":"思い出を見る";return <li><Link href={getTripExperiencePath(trip)} className="group block overflow-hidden rounded-2xl bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><article><div className="relative flex aspect-video flex-col justify-end overflow-hidden bg-teal-800 p-5 text-white"><CoverPhotoImage tripId={trip.id} alt={`${trip.title}の表紙写真`}/><div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/25"/><div className="relative"><h3 className="line-clamp-2 text-xl font-bold">{trip.title}</h3><p className="mt-2 truncate text-sm text-white/80">{formatTripDateRange(trip.startDate,trip.endDate)}</p></div></div><div className="p-4"><div className="flex items-start justify-between gap-3"><p className="min-w-0 break-words text-sm font-medium">{message}</p><StatusBadge className={status.className}>{status.label}</StatusBadge></div><p className="mt-4 text-sm font-bold text-teal-700 group-hover:underline">{action} →</p></div></article></Link></li>}
+function localDate(){const n=new Date(),p=(x:number)=>String(x).padStart(2,"0");return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`}function daysUntil(date:string){const days=Math.max(0,Math.ceil((new Date(`${date}T00:00`).getTime()-new Date(`${localDate()}T00:00`).getTime())/86400000));return days===0?"出発日":`出発まであと${days}日`}function tripDay(start:string){return Math.max(1,Math.floor((new Date(`${localDate()}T00:00`).getTime()-new Date(`${start}T00:00`).getTime())/86400000)+1)}

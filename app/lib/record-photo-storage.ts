@@ -53,3 +53,10 @@ export async function deleteRecordPhotosForTrip(tripId: string) {
   });
   window.dispatchEvent(new CustomEvent(RECORD_PHOTO_CHANGED_EVENT, { detail: { tripId } }));
 }
+
+export function countRecordPhotosForTrip(tripId: string) {
+  return runTransaction<number>("readonly", (store, setResult) => {
+    const request = store.index("tripId").count(IDBKeyRange.only(tripId));
+    request.onsuccess = () => setResult(request.result);
+  });
+}

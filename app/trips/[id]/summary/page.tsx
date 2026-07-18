@@ -17,6 +17,9 @@ import { formatDuration, TRANSPORT_MODE_LABELS, transportDurationMinutes, type T
 import CoverPhotoImage from "@/app/components/cover-photo-image";
 import { RecordPhotoViewer } from "@/app/components/record-photo-media";
 import { useRecordPhoto } from "@/app/lib/use-record-photo";
+import TripExperienceNav from "@/app/components/trip-experience-nav";
+import QuickAddLauncher from "@/app/components/quick-add-launcher";
+import { useRecordPhotoCount } from "@/app/lib/use-record-photo-count";
 
 export default function TripSummaryPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +28,7 @@ export default function TripSummaryPage() {
   const { reservations, isLoaded: reservationsLoaded } = useReservations(id);
   const { records, isLoaded: recordsLoaded } = useRecords(id);
   const { transports, isLoaded: transportsLoaded } = useTransports(id);
+  const photoCount = useRecordPhotoCount(id);
   const [activeDay, setActiveDay] = useState(0);
   const trip = trips.find((item) => item.id === id);
   const isLoaded = tripsLoaded && schedulesLoaded && reservationsLoaded && recordsLoaded && transportsLoaded;
@@ -35,12 +39,14 @@ export default function TripSummaryPage() {
     <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
       {!isLoaded ? <p className="py-10 text-sm text-stone-500">旅のまとめを読み込んでいます…</p> : !trip || !summary ? <Missing /> : <>
         <Hero trip={trip} days={summary.duration.days} />
+        <TripExperienceNav trip={trip} active="memories" />
+        <QuickAddLauncher trip={trip} navigationOnly experience="memories" />
 
         <section aria-labelledby="overview-heading" className="py-7 sm:py-9">
           <SectionHeading id="overview-heading" eyebrow="AT A GLANCE">旅の概要</SectionHeading>
           <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard icon={<CalendarIcon />} label="予定" value={`${summary.counts.schedules}件`} />
-            <StatCard icon={<TicketIcon />} label="予約" value={`${summary.counts.reservations}件`} />
+            <StatCard icon={<PhotoIcon />} label="写真" value={`${photoCount}枚`} />
+            <StatCard icon={<CalendarIcon />} label="訪れた場所" value={`${summary.counts.places}か所`} />
             <StatCard icon={<WalletIcon />} label="支出合計" value={yen(summary.expenses.total)} />
             <StatCard icon={<NoteIcon />} label="記録" value={`${summary.counts.records}件`} />
             <StatCard icon={<TrainIcon />} label="移動" value={`${summary.counts.transports}件・${formatDuration(summary.transportMinutes) || "0分"}`} />

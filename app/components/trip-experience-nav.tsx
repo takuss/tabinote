@@ -1,0 +1,5 @@
+"use client";
+import Link from "next/link";
+import type { Trip } from "@/app/lib/trips";
+const items = [{ key: "plan", label: "計画", suffix: "" }, { key: "today", label: "今日", suffix: "/today" }, { key: "memories", label: "思い出", suffix: "/summary" }] as const;
+export default function TripExperienceNav({ trip, active }: { trip: Trip; active: typeof items[number]["key"] }) { return <nav aria-label="旅行の表示" className="sticky top-0 z-30 -mx-4 bg-stone-100/95 px-4 py-2 backdrop-blur sm:mx-0 sm:px-0"><div className="grid grid-cols-3 rounded-2xl bg-white p-1">{items.map((item) => { const selected = item.key === active; return <Link key={item.key} href={`/trips/${trip.id}${item.suffix}`} aria-current={selected ? "page" : undefined} className={`inline-flex min-h-12 items-center justify-center rounded-xl text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${selected ? "bg-teal-700 text-white" : "text-stone-500 hover:bg-stone-50"}`}>{selected && <span className="mr-1" aria-hidden="true">●</span>}{item.label}</Link>; })}</div></nav>; }

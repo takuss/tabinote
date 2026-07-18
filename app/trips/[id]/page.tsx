@@ -18,6 +18,8 @@ import { deleteCoverPhoto } from "@/app/lib/cover-photo-storage";
 import { deleteRecordPhotosForTrip } from "@/app/lib/record-photo-storage";
 import TransportsSection from "@/app/components/transports-section";
 import NextTransportCard from "@/app/components/next-transport-card";
+import TripExperienceNav from "@/app/components/trip-experience-nav";
+import PlanFlow from "@/app/components/plan-flow";
 
 
 export default function TripDetailPage() {
@@ -60,8 +62,9 @@ export default function TripDetailPage() {
         ) : (
           <>
             <TripDetailHero trip={trip} onDelete={handleTripDelete} />
+            <TripExperienceNav trip={trip} active="plan" />
             <NextTransportCard trip={trip} />
-            <Link href={`/trips/${trip.id}/today`} className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-bold text-teal-800">今日の旅程を見る</Link>
+            <PlanFlow trip={trip} />
 
             <QuickAddLauncher trip={trip} navigationOnly />
             <CoverPhotoManager tripId={trip.id} />
@@ -74,7 +77,7 @@ export default function TripDetailPage() {
                 <DetailRow label="メモ" value={trip.memo || "メモはありません"} preserveLines />
               </dl></details>
 
-            <section aria-labelledby="schedule-heading" className="mt-5"><AppCard><SectionHeader id="schedule-heading" title="予定" count={schedules.length} href={`/trips/${trip.id}/schedule/new`} />
+            <details className="mt-6"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between rounded-2xl bg-white px-5 font-bold">すべての情報を管理<span aria-hidden="true" className="text-stone-400">⌄</span></summary><div className="pb-4"><section aria-labelledby="schedule-heading" className="mt-5"><AppCard><SectionHeader id="schedule-heading" title="予定" count={schedules.length} href={`/trips/${trip.id}/schedule/new`} />
               {!schedulesLoaded ? (
                 <p className="py-6 text-sm text-stone-500">予定を読み込んでいます…</p>
               ) : schedules.length === 0 ? (
@@ -87,6 +90,7 @@ export default function TripDetailPage() {
             <TransportsSection trip={trip} />
             <ReservationsSection trip={trip} />
             <RecordsSections trip={trip} />
+            </div></details>
           </>
         )}
       </div>
