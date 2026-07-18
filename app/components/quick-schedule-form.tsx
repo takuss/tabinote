@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createScheduleId, saveSchedule, type Schedule } from "@/app/lib/schedules";
 import { formatTripDate, type Trip } from "@/app/lib/trips";
 
@@ -42,6 +42,8 @@ function getTripDates(startDate: string, endDate: string) {
 export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
   const [errors, setErrors] = useState<Errors>({});
   const [initialValues] = useState(() => getInitialValues(trip));
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const tripDates = getTripDates(trip.startDate, trip.endDate);
 
   function cancel() {
@@ -51,6 +53,7 @@ export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClo
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitLock.current) return;
     const data = new FormData(event.currentTarget);
     const date = String(data.get("quickDate") ?? "");
     const startTime = String(data.get("quickStartTime") ?? "");
@@ -84,10 +87,11 @@ export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClo
     };
 
     try {
+      submitLock.current = true; setSubmitting(true);
       saveSchedule(schedule);
       setErrors({});
       onClose();
-    } catch {
+    } catch { submitLock.current = false; setSubmitting(false);
       setErrors({ storage: "予定を保存できませんでした。ブラウザの設定を確認してください。" });
     }
   }
@@ -125,7 +129,7 @@ export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClo
 
       <div className="mt-5 flex gap-3 sm:justify-end">
         <button type="button" onClick={cancel} className="min-h-12 flex-1 rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</button>
-        <button type="submit" className="min-h-12 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">保存する</button>
+        <button type="submit" disabled={submitting} aria-busy={submitting} className="min-h-12 flex-[2] rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60 sm:flex-none">{submitting ? "保存中…" : "保存する"}</button>
       </div>
     </form>
   );

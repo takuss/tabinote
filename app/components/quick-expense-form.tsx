@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createRecordId, saveRecord, type ExpenseCategory, type RecordType, type TripRecord } from "@/app/lib/records";
 import type { Trip } from "@/app/lib/trips";
 
@@ -32,6 +32,8 @@ function toRecordType(category: QuickCategory): RecordType {
 export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
   const [errors, setErrors] = useState<Errors>({});
   const [initialValues] = useState(() => getInitialValues(trip));
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
 
   function closeForm() {
     setErrors({});
@@ -40,6 +42,7 @@ export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClos
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitLock.current) return;
     const data = new FormData(event.currentTarget);
     const date = String(data.get("quickExpenseDate") ?? "");
     const amountText = String(data.get("quickExpenseAmount") ?? "");
@@ -74,9 +77,10 @@ export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClos
     };
 
     try {
+      submitLock.current = true; setSubmitting(true);
       saveRecord(record);
       closeForm();
-    } catch {
+    } catch { submitLock.current = false; setSubmitting(false);
       setErrors({ storage: "支出を保存できませんでした。ブラウザの設定を確認してください。" });
     }
   }
@@ -90,7 +94,7 @@ export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClos
       <Field label="日付" optional error={errors.date} htmlFor="quickExpenseDate"><input id="quickExpenseDate" name="quickExpenseDate" type="date" min={trip.startDate} max={trip.endDate} defaultValue={initialValues.date} aria-invalid={Boolean(errors.date)} className={inputClass} /></Field>
     </div>
     <div className="mt-4"><Field label="メモ" optional htmlFor="quickExpenseMemo"><input id="quickExpenseMemo" name="quickExpenseMemo" type="text" placeholder="例：駅前で昼食" className={inputClass} /></Field></div>
-    <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</button><button type="submit" className="min-h-12 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">保存する</button></div>
+    <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded-xl bg-stone-100 px-4 text-sm font-bold hover:bg-stone-200 sm:flex-none">キャンセル</button><button type="submit" disabled={submitting} aria-busy={submitting} className="min-h-12 flex-[2] rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60 sm:flex-none">{submitting ? "保存中…" : "保存する"}</button></div>
   </form>;
 }
 

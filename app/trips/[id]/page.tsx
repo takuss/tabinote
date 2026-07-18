@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { deleteSchedule, sortSchedules, type Schedule } from "@/app/lib/schedules";
 import { useSchedules } from "@/app/lib/use-schedules";
-import { deleteTrip, formatTripDate, getTripStatus } from "@/app/lib/trips";
+import { deleteTrip, formatTripDate, formatTripDateRange, getTripStatus } from "@/app/lib/trips";
+import { getTripDuration } from "@/app/lib/trip-summary";
+import { AppCard, EmptyState, SectionHeader, StatusBadge } from "@/app/components/ui";
 import { useTrips } from "@/app/lib/use-trips";
 import ReservationsSection from "@/app/components/reservations-section";
 import RecordsSections from "@/app/components/records-sections";
@@ -37,7 +39,7 @@ export default function TripDetailPage() {
           <Link href="/" className="text-lg font-bold tracking-tight">旅ノート</Link>
         </div>
       </header>
-      <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
         {!isLoaded ? (
           <p className="text-sm text-stone-500">旅行を読み込んでいます…</p>
         ) : !trip ? (
@@ -48,49 +50,26 @@ export default function TripDetailPage() {
           </section>
         ) : (
           <>
-            <div className="border-b border-stone-300 pb-5">
-              <Link href="/" className="text-sm font-medium text-teal-800 hover:underline">← 戻る</Link>
-              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{trip.title}</h1>
-                    <span className={`rounded-sm border px-2 py-1 text-xs font-bold ${getTripStatus(trip).className}`}>{getTripStatus(trip).label}</span>
-                  </div>
-                  <p className="mt-2 text-sm text-stone-600">{trip.destination}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link href={`/trips/${trip.id}/summary`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">旅のまとめを見る</Link>
-                  <Link href={`/trips/${trip.id}/edit`} className="inline-flex min-h-11 flex-1 items-center justify-center rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">編集</Link>
-                  <button type="button" onClick={handleTripDelete} className="min-h-11 flex-1 rounded border border-red-300 bg-white px-4 text-sm font-bold text-red-700 hover:bg-red-50 sm:flex-none">削除</button>
-                </div>
-              </div>
-            </div>
+            <section className="relative overflow-hidden rounded-2xl bg-teal-800 p-5 text-white sm:p-7"><div className="absolute -right-12 -top-14 size-44 rounded-full border-[26px] border-white/10" aria-hidden="true" /><div className="relative"><div className="flex items-start justify-between gap-3"><Link href="/" className="inline-flex min-h-12 items-center text-sm font-bold text-white/80 hover:text-white">← 旅行一覧</Link><StatusBadge className={getTripStatus(trip).className}>{getTripStatus(trip).label}</StatusBadge></div><p className="mt-5 text-sm text-white/70">{trip.destination}</p><h1 className="mt-1 break-words text-3xl font-bold tracking-tight sm:text-4xl">{trip.title}</h1><p className="mt-3 text-sm text-white/80">{formatTripDateRange(trip.startDate, trip.endDate)}・{getTripDuration(trip.startDate, trip.endDate).days}日間</p><div className="mt-6 flex flex-wrap gap-3"><Link href={`/trips/${trip.id}/summary`} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-bold text-teal-800 sm:flex-none">旅のまとめ</Link><Link href={`/trips/${trip.id}/edit`} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white/15 px-4 text-sm font-bold text-white hover:bg-white/20">編集</Link><button type="button" onClick={handleTripDelete} className="inline-flex min-h-12 items-center px-2 text-sm font-medium text-white/65 hover:text-white">削除</button></div></div></section>
 
-            <QuickAddLauncher trip={trip} />
+            <QuickAddLauncher trip={trip} navigationOnly />
 
-            <section aria-labelledby="overview-heading" className="py-7">
-              <h2 id="overview-heading" className="border-b border-stone-300 pb-3 text-lg font-bold">概要</h2>
-              <dl className="divide-y divide-stone-200">
+            <details className="mt-5 rounded-2xl bg-white px-4 open:pb-2 sm:px-5"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">旅行情報<span className="text-stone-400" aria-hidden="true">⌄</span></summary><dl className="divide-y divide-stone-100">
                 <DetailRow label="行き先" value={trip.destination} />
                 <DetailRow label="開始日" value={formatTripDate(trip.startDate)} />
                 <DetailRow label="終了日" value={formatTripDate(trip.endDate)} />
                 <DetailRow label="状態" value={getTripStatus(trip).label} />
                 <DetailRow label="メモ" value={trip.memo || "メモはありません"} preserveLines />
-              </dl>
-            </section>
+              </dl></details>
 
-            <section aria-labelledby="schedule-heading" className="border-t border-stone-300 py-7">
-              <div className="flex items-center justify-between gap-4 border-b border-stone-300 pb-3">
-                <h2 id="schedule-heading" className="text-lg font-bold">日程</h2>
-                <Link href={`/trips/${trip.id}/schedule/new`} className="inline-flex min-h-11 items-center text-sm font-bold text-teal-800 hover:underline">詳細入力</Link>
-              </div>
+            <section aria-labelledby="schedule-heading" className="mt-5"><AppCard><SectionHeader id="schedule-heading" title="予定" count={schedules.length} href={`/trips/${trip.id}/schedule/new`} />
               {!schedulesLoaded ? (
                 <p className="py-6 text-sm text-stone-500">予定を読み込んでいます…</p>
               ) : schedules.length === 0 ? (
-                <p className="py-7 text-sm text-stone-500">まだ予定がありません</p>
+                <EmptyState title="予定はまだありません" description="下の追加ボタンから、最初の予定を登録できます。" />
               ) : (
                 <ScheduleList tripId={trip.id} schedules={schedules} onDelete={handleScheduleDelete} />
-              )}
+              )}</AppCard>
             </section>
 
             <ReservationsSection trip={trip} />
@@ -119,8 +98,8 @@ function ScheduleList({ tripId, schedules, onDelete }: { tripId: string; schedul
             {schedule.memo && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-stone-500">{schedule.memo}</p>}
           </div>
           <div className="col-start-2 flex gap-3 text-sm sm:col-start-3 sm:row-start-1">
-            <Link href={`/trips/${tripId}/schedule/${schedule.id}/edit`} className="font-medium text-teal-800 hover:underline">編集</Link>
-            <button type="button" onClick={() => onDelete(schedule)} className="font-medium text-red-700 hover:underline">削除</button>
+            <Link href={`/trips/${tripId}/schedule/${schedule.id}/edit`} className="inline-flex min-h-12 items-center font-medium text-teal-800 hover:underline">編集</Link>
+            <button type="button" onClick={() => onDelete(schedule)} className="inline-flex min-h-12 items-center font-medium text-stone-500 hover:text-red-700">削除</button>
           </div>
         </li>
       ))}</ol>

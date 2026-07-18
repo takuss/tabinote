@@ -1,94 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import {
-  formatTripDateRange,
-  getTripStatus,
-} from "@/app/lib/trips";
+import BackupManager from "@/app/components/backup-manager";
+import { EmptyState, StatusBadge, primaryButtonClass } from "@/app/components/ui";
+import { getTripDuration } from "@/app/lib/trip-summary";
+import { formatTripDateRange, getTripStatus } from "@/app/lib/trips";
 import { useTrips } from "@/app/lib/use-trips";
 
 export default function Home() {
   const { trips, isLoaded } = useTrips();
-
-  return (
-    <main className="min-h-screen bg-stone-50 text-stone-900">
-      <header className="border-b border-stone-300 bg-white">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            旅ノート
-          </Link>
-          <span className="text-xs text-stone-500">国内旅行ノート</span>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-between gap-4 border-b border-stone-300 pb-4">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">あなたの旅行</h1>
-            {trips.length > 0 && (
-              <p className="mt-1 text-sm text-stone-500">{trips.length}件の旅行ノート</p>
-            )}
-          </div>
-          <Link
-            href="/trips/new"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded bg-teal-700 px-4 text-sm font-bold text-white transition-colors hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
-          >
-            <span aria-hidden="true" className="mr-1 text-lg font-normal">
-              ＋
-            </span>
-            新しい旅行
-          </Link>
-        </div>
-
-        {!isLoaded ? (
-          <p className="py-10 text-sm text-stone-500">旅行を読み込んでいます…</p>
-        ) : trips.length === 0 ? (
-          <section className="border-b border-stone-300 py-12 text-center" aria-label="旅行なし">
-            <h2 className="text-base font-bold">まだ旅行がありません</h2>
-            <p className="mt-2 text-sm leading-6 text-stone-500">
-              最初の旅行ノートを作って、日程や行き先をまとめましょう。
-            </p>
-            <Link
-              href="/trips/new"
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100"
-            >
-              新しい旅行を作る
-            </Link>
-          </section>
-        ) : (
-          <ol className="divide-y divide-stone-300 border-b border-stone-300">
-            {trips.map((trip) => {
-              const status = getTripStatus(trip);
-
-              return (
-                <li key={trip.id}>
-                  <Link href={`/trips/${trip.id}`} className="block py-5 transition-colors hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 sm:px-2 sm:py-6">
-                  <article className="grid gap-3 sm:grid-cols-[9rem_1fr_auto] sm:items-start sm:gap-6">
-                    <p className="text-sm font-medium tabular-nums text-stone-600">
-                      {formatTripDateRange(trip.startDate, trip.endDate)}
-                    </p>
-                    <div className="min-w-0">
-                      <h2 className="text-lg font-bold leading-6">{trip.title}</h2>
-                      <p className="mt-1 text-sm text-stone-600">{trip.destination}</p>
-                      {trip.memo && (
-                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-stone-500">
-                          {trip.memo}
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className={`w-fit rounded-sm border px-2 py-1 text-xs font-bold ${status.className}`}
-                    >
-                      {status.label}
-                    </span>
-                  </article>
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </div>
-    </main>
-  );
+  return <main className="min-h-screen bg-stone-100 text-stone-900"><header className="bg-white"><div className="mx-auto max-w-5xl px-4 py-5 sm:px-6"><p className="text-xs font-bold tracking-[0.18em] text-teal-700">YOUR TRIPS</p><div className="mt-1 flex items-end justify-between gap-4"><div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">旅ノート</h1><p className="mt-1 text-sm text-stone-500">旅の予定と思い出を、ひとつに。</p></div><Link href="/trips/new" className={`${primaryButtonClass} shrink-0`}><span aria-hidden="true" className="mr-1 text-lg">＋</span>新しい旅行</Link></div></div></header>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      {!isLoaded ? <p className="py-12 text-center text-sm text-stone-500">旅行を読み込んでいます…</p> : trips.length === 0 ? <div className="rounded-2xl bg-white px-5"><EmptyState title="最初の旅を記録しましょう" description="旅行を作ると、予定・予約・支出・思い出をまとめられます。" action={<Link href="/trips/new" className={primaryButtonClass}>旅行を作る</Link>} /></div> : <><div className="mb-4 flex items-baseline justify-between"><h2 className="text-lg font-bold">あなたの旅行</h2><p className="text-xs text-stone-400">{trips.length}件</p></div><ol className="grid gap-5 sm:grid-cols-2">{trips.map((trip, index) => { const status = getTripStatus(trip); const duration = getTripDuration(trip.startDate, trip.endDate); return <li key={trip.id}><Link href={`/trips/${trip.id}`} className="group block overflow-hidden rounded-2xl bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><article><div className="relative flex aspect-[16/8] flex-col justify-between overflow-hidden bg-teal-800 p-5 text-white"><div className="absolute -right-10 -top-12 size-40 rounded-full border-[24px] border-white/10" aria-hidden="true" /><p className="relative text-xs font-bold tracking-widest text-white/70">TRIP {String(index + 1).padStart(2, "0")}</p><div className="relative min-w-0"><h3 className="line-clamp-2 text-xl font-bold leading-tight sm:text-2xl">{trip.title}</h3><p className="mt-2 truncate text-sm text-white/75">{formatTripDateRange(trip.startDate, trip.endDate)}</p></div></div><div className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-bold">{trip.destination}</p><p className="mt-1 text-sm text-stone-500">{duration.days}日間</p></div><StatusBadge className={status.className}>{status.label}</StatusBadge></div><p className="mt-4 text-sm font-bold text-teal-700 group-hover:underline">旅行を開く <span aria-hidden="true">→</span></p></div></article></Link></li>; })}</ol></>}
+      <BackupManager />
+    </div>
+  </main>;
 }

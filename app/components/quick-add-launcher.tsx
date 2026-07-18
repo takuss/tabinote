@@ -16,7 +16,7 @@ const ADD_OPTIONS: AddOption[] = [
   { kind: "reservation", label: "予約を追加", description: "宿や交通などの予約を登録", icon: <TicketIcon /> },
 ];
 
-export default function QuickAddLauncher({ trip }: { trip: Trip }) {
+export default function QuickAddLauncher({ trip, navigationOnly = false }: { trip: Trip; navigationOnly?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeKind, setActiveKind] = useState<AddKind | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -76,11 +76,11 @@ export default function QuickAddLauncher({ trip }: { trip: Trip }) {
     });
   }
 
-  return <section aria-labelledby="quick-add-heading" className="border-b border-stone-300 py-6">
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-4 sm:px-5">
+  return <section aria-label="クイック追加" className={navigationOnly ? "" : "border-b border-stone-300 py-6"}>
+    {!navigationOnly && <div className="flex items-center justify-between gap-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-4 sm:px-5">
       <div><h2 id="quick-add-heading" className="font-bold">旅の情報を追加</h2><p className="mt-1 text-sm text-stone-600">予定・支出・予約をここからすぐに登録できます</p></div>
       <button ref={triggerRef} type="button" onClick={() => { externalTriggerRef.current = null; setIsMenuOpen(true); }} aria-haspopup="dialog" aria-expanded={isMenuOpen} aria-controls="quick-add-sheet" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 text-base font-bold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">＋追加</button>
-    </div>
+    </div>}
 
     <div ref={formRegionRef} aria-live="polite">
       {activeKind === "schedule" && <QuickScheduleForm key="schedule" trip={trip} onClose={() => setActiveKind(null)} />}

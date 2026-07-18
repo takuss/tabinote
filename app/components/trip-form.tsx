@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { loadTrips, saveTrip, updateTrip, type Trip } from "@/app/lib/trips";
+import { FormActions, FormField, inputClass } from "@/app/components/ui";
 
 type FormErrors = Partial<
   Record<"title" | "destination" | "startDate" | "endDate" | "storage", string>
@@ -13,9 +13,6 @@ type TripFormProps = {
   trip?: Trip;
   cancelHref: string;
 };
-
-const inputClassName =
-  "mt-2 min-h-11 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
 function createUniqueId() {
   const existingIds = new Set(loadTrips().map((trip) => trip.id));
@@ -27,9 +24,12 @@ function createUniqueId() {
 export default function TripForm({ trip, cancelHref }: TripFormProps) {
   const router = useRouter();
   const [errors, setErrors] = useState<FormErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitLock.current) return;
     const form = new FormData(event.currentTarget);
     const title = String(form.get("title") ?? "").trim();
     const destination = String(form.get("destination") ?? "").trim();
@@ -52,6 +52,7 @@ export default function TripForm({ trip, cancelHref }: TripFormProps) {
     }
 
     try {
+      submitLock.current = true; setSubmitting(true);
       if (trip) {
         const updated = updateTrip(trip.id, {
           ...trip,
@@ -63,7 +64,7 @@ export default function TripForm({ trip, cancelHref }: TripFormProps) {
         });
         if (!updated) {
           setErrors({ storage: "編集する旅行が見つかりませんでした。" });
-          return;
+          submitLock.current = false; setSubmitting(false); return;
         }
         router.push(`/trips/${trip.id}`);
       } else {
@@ -78,7 +79,7 @@ export default function TripForm({ trip, cancelHref }: TripFormProps) {
         });
         router.push("/");
       }
-    } catch {
+    } catch { submitLock.current = false; setSubmitting(false);
       setErrors({ storage: "旅行を保存できませんでした。ブラウザの設定を確認してください。" });
     }
   }
@@ -91,48 +92,18 @@ export default function TripForm({ trip, cancelHref }: TripFormProps) {
         </p>
       )}
 
-      <Field label="旅行タイトル" required error={errors.title} htmlFor="title">
-        <input id="title" name="title" type="text" defaultValue={trip?.title} autoComplete="off" aria-invalid={Boolean(errors.title)} aria-describedby={errors.title ? "title-error" : undefined} placeholder="例：京都の寺社をめぐる旅" className={inputClassName} />
-      </Field>
+      <FormField label="旅行タイトル" required error={errors.title} htmlFor="title"><input id="title" name="title" type="text" defaultValue={trip?.title} autoComplete="off" aria-invalid={Boolean(errors.title)} aria-describedby={errors.title ? "title-error" : undefined} placeholder="例：京都の寺社をめぐる旅" className={inputClass} /></FormField>
 
-      <Field label="行き先" required error={errors.destination} htmlFor="destination">
-        <input id="destination" name="destination" type="text" defaultValue={trip?.destination} autoComplete="off" aria-invalid={Boolean(errors.destination)} aria-describedby={errors.destination ? "destination-error" : undefined} placeholder="例：京都府京都市" className={inputClassName} />
-      </Field>
+      <FormField label="行き先" required error={errors.destination} htmlFor="destination"><input id="destination" name="destination" type="text" defaultValue={trip?.destination} autoComplete="off" aria-invalid={Boolean(errors.destination)} aria-describedby={errors.destination ? "destination-error" : undefined} placeholder="例：京都府京都市" className={inputClass} /></FormField>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <Field label="開始日" required error={errors.startDate} htmlFor="startDate">
-          <input id="startDate" name="startDate" type="date" defaultValue={trip?.startDate} aria-invalid={Boolean(errors.startDate)} aria-describedby={errors.startDate ? "startDate-error" : undefined} className={inputClassName} />
-        </Field>
-        <Field label="終了日" required error={errors.endDate} htmlFor="endDate">
-          <input id="endDate" name="endDate" type="date" defaultValue={trip?.endDate} aria-invalid={Boolean(errors.endDate)} aria-describedby={errors.endDate ? "endDate-error" : undefined} className={inputClassName} />
-        </Field>
+        <FormField label="開始日" required error={errors.startDate} htmlFor="startDate"><input id="startDate" name="startDate" type="date" defaultValue={trip?.startDate} aria-invalid={Boolean(errors.startDate)} aria-describedby={errors.startDate ? "startDate-error" : undefined} className={inputClass} /></FormField>
+        <FormField label="終了日" required error={errors.endDate} htmlFor="endDate"><input id="endDate" name="endDate" type="date" defaultValue={trip?.endDate} aria-invalid={Boolean(errors.endDate)} aria-describedby={errors.endDate ? "endDate-error" : undefined} className={inputClass} /></FormField>
       </div>
 
-      <Field label="メモ" htmlFor="memo">
-        <textarea id="memo" name="memo" rows={5} defaultValue={trip?.memo} placeholder="行きたい場所や、旅の目的など" className={`${inputClassName} resize-y`} />
-      </Field>
+      <FormField label="メモ" htmlFor="memo"><textarea id="memo" name="memo" rows={5} defaultValue={trip?.memo} placeholder="行きたい場所や、旅の目的など" className={`${inputClass} resize-y`} /></FormField>
 
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-stone-300 bg-stone-50/95 px-4 py-4 backdrop-blur-sm sm:static sm:mx-0 sm:justify-end sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-none">
-        <Link href={cancelHref} className="inline-flex min-h-11 flex-1 items-center justify-center rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">
-          キャンセル
-        </Link>
-        <button type="submit" className="min-h-11 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 sm:flex-none">
-          {trip ? "変更を保存する" : "旅行を保存する"}
-        </button>
-      </div>
+      <FormActions cancelHref={cancelHref} submitting={submitting} submitLabel={trip ? "変更を保存" : "旅行を保存"} />
     </form>
-  );
-}
-
-function Field({ label, required = false, error, htmlFor, children }: { label: string; required?: boolean; error?: string; htmlFor: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label htmlFor={htmlFor} className="text-sm font-bold text-stone-800">
-        {label}
-        {required && <span className="ml-2 text-xs font-normal text-red-700">必須</span>}
-      </label>
-      {children}
-      {error && <p id={`${htmlFor}-error`} role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}
-    </div>
   );
 }

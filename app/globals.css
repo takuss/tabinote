@@ -4,12 +4,19 @@
   --background: #fafaf9;
   --foreground: #1c1917;
   --app-accent: #0f766e;
+  --app-muted: #78716c;
+  --app-error: #b91c1c;
+  --app-success: #15803d;
+  --app-border: #e7e5e4;
+  --app-card: #ffffff;
   --app-radius-control: 0.75rem;
   --app-radius-card: 1rem;
   --app-space-page: 1rem;
+  --app-space-section: 1.75rem;
   --app-text-heading: 1.25rem;
   --app-text-body: 0.875rem;
   --app-text-supporting: 0.75rem;
+  --app-control-height: 3rem;
 }
 
 @theme inline {

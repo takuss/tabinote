@@ -114,7 +114,7 @@ export function getTripStatus(trip: Trip) {
 
   if (today < start) {
     return {
-      label: "計画中",
+      label: "旅行前",
       className: "border-teal-200 bg-teal-50 text-teal-800",
     };
   }

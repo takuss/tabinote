@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { deleteReservation, sortReservations, type Reservation } from "@/app/lib/reservations";
 import { useReservations } from "@/app/lib/use-reservations";
 import type { Trip } from "@/app/lib/trips";
+import { AppCard, EmptyState, SectionHeader } from "@/app/components/ui";
 
 export default function ReservationsSection({ trip }: { trip: Trip }) {
   const tripId = trip.id;
@@ -28,12 +29,9 @@ export default function ReservationsSection({ trip }: { trip: Trip }) {
   }
 
   return (
-    <section aria-labelledby="reservations-heading" className="border-t border-stone-300 py-7">
-      <div className="flex items-center justify-between gap-4 border-b border-stone-300 pb-3">
-        <h2 id="reservations-heading" className="text-lg font-bold">予約</h2>
-        <Link href={`/trips/${tripId}/reservations/new`} className="inline-flex min-h-12 items-center text-sm font-bold text-teal-800 hover:underline">詳細入力</Link>
-      </div>
-      {!isLoaded ? <p className="py-6 text-sm text-stone-500">予約情報を読み込んでいます…</p> : reservations.length === 0 ? <p className="py-7 text-sm text-stone-500">まだ予約情報がありません</p> : (
+    <section aria-labelledby="reservations-heading" className="mt-5"><AppCard>
+      <SectionHeader id="reservations-heading" title="予約" count={reservations.length} href={`/trips/${tripId}/reservations/new`} />
+      {!isLoaded ? <p className="py-6 text-sm text-stone-500">予約情報を読み込んでいます…</p> : reservations.length === 0 ? <EmptyState title="予約はまだありません" description="宿泊や交通の予約を追加できます。" /> : (
         <><div className="flex items-baseline justify-between border-b border-stone-200 py-5"><p className="text-sm text-stone-500">予約金額の合計</p><p className="text-xl font-bold tabular-nums">{new Intl.NumberFormat("ja-JP").format(totalAmount)}円</p></div><ol className="divide-y divide-stone-300">
           {sortedReservations.map((item) => (
             <li key={item.id} className="py-5">
@@ -42,7 +40,7 @@ export default function ReservationsSection({ trip }: { trip: Trip }) {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{item.name}</h3><span className="border border-stone-300 bg-stone-100 px-1.5 py-0.5 text-xs text-stone-600">{item.type}</span></div>
                   {item.provider && <p className="mt-1 text-sm text-stone-600">{item.provider}</p>}
-                  {item.confirmationNumber && <div className="mt-2 flex flex-wrap items-center gap-2 text-sm"><span className="text-stone-500">予約番号</span><code className="font-sans font-medium">{item.confirmationNumber}</code><button type="button" onClick={() => copyNumber(item)} className="font-medium text-teal-800 hover:underline">コピー</button>{copiedId === item.id && <span role="status" className="text-xs text-teal-800">コピーしました</span>}</div>}
+                  {item.confirmationNumber && <div className="mt-2 flex flex-wrap items-center gap-2 text-sm"><span className="text-stone-500">予約番号</span><code className="break-all font-sans font-medium">{item.confirmationNumber}</code><button type="button" onClick={() => copyNumber(item)} className="inline-flex min-h-12 items-center font-medium text-teal-800 hover:underline">コピー</button>{copiedId === item.id && <span role="status" className="text-xs text-teal-800">コピーしました</span>}</div>}
                   {item.amount !== null && <p className="mt-2 text-sm font-medium">{new Intl.NumberFormat("ja-JP").format(item.amount)}円</p>}
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
                     {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-medium text-teal-800 hover:underline">予約ページを開く</a>}
@@ -51,14 +49,14 @@ export default function ReservationsSection({ trip }: { trip: Trip }) {
                   {item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-500">{item.memo}</p>}
                 </div>
                 <div className="flex gap-3 text-sm sm:justify-end">
-                  <Link href={`/trips/${tripId}/reservations/${item.id}/edit`} className="font-medium text-teal-800 hover:underline">編集</Link>
-                  <button type="button" onClick={() => handleDelete(item)} className="font-medium text-red-700 hover:underline">削除</button>
+                  <Link href={`/trips/${tripId}/reservations/${item.id}/edit`} className="inline-flex min-h-12 items-center font-medium text-teal-800 hover:underline">編集</Link>
+                  <button type="button" onClick={() => handleDelete(item)} className="inline-flex min-h-12 items-center font-medium text-stone-500 hover:text-red-700">削除</button>
                 </div>
               </article>
             </li>
           ))}
         </ol></>
-      )}
+      )}</AppCard>
     </section>
   );
 }

@@ -25,6 +25,7 @@ export default function QuickReservationForm({ trip, onClose }: { trip: Trip; on
   const [errors, setErrors] = useState<Errors>({});
   const [hasAmount, setHasAmount] = useState(false);
   const isSubmitting = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function closeForm() {
     setErrors({});
@@ -69,11 +70,11 @@ export default function QuickReservationForm({ trip, onClose }: { trip: Trip; on
     };
 
     try {
-      isSubmitting.current = true;
+      isSubmitting.current = true; setSubmitting(true);
       saveReservationWithExpense(reservation, addToExpenses);
       closeForm();
     } catch {
-      isSubmitting.current = false;
+      isSubmitting.current = false; setSubmitting(false);
       setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" });
     }
   }
@@ -91,7 +92,7 @@ export default function QuickReservationForm({ trip, onClose }: { trip: Trip; on
     </div>
     <label className={`mt-4 flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold ${hasAmount ? "cursor-pointer border-teal-200 bg-white text-stone-800" : "border-stone-200 bg-stone-100 text-stone-400"}`}><input name="quickReservationAddToExpenses" type="checkbox" disabled={!hasAmount} className="size-5 shrink-0 accent-teal-700" /><span>この金額を支出にも追加する</span></label>
     <div className="mt-4"><Field label="メモ" optional htmlFor="quickReservationMemo"><textarea id="quickReservationMemo" name="quickReservationMemo" rows={3} placeholder="キャンセル条件など" className={`${inputClass} resize-y`} /></Field></div>
-    <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</button><button type="submit" className="min-h-12 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">保存する</button></div>
+    <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded-xl bg-stone-100 px-4 text-sm font-bold hover:bg-stone-200 sm:flex-none">キャンセル</button><button type="submit" disabled={submitting} aria-busy={submitting} className="min-h-12 flex-[2] rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60 sm:flex-none">{submitting ? "保存中…" : "保存する"}</button></div>
   </form>;
 }
 

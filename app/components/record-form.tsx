@@ -1,21 +1,22 @@
 "use client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createRecordId, EXPENSE_CATEGORIES, PAYMENT_METHODS, RECORD_TYPES, saveRecord, updateRecord, validateRecordValues, type RecordValues, type TripRecord } from "@/app/lib/records";
 import type { Trip } from "@/app/lib/trips";
+import { FormActions, FormField as Field, inputClass } from "@/app/components/ui";
 
 type Errors = ReturnType<typeof validateRecordValues> & { storage?: string };
-const inputClass = "mt-2 min-h-11 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base outline-none placeholder:text-stone-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
 export default function RecordForm({ trip, record }: { trip: Trip; record?: TripRecord }) {
   const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
   const [hasAmount, setHasAmount] = useState(record?.amount !== null && record?.amount !== undefined);
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const detailHref = `/trips/${trip.id}`;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const data = new FormData(event.currentTarget);
+    event.preventDefault(); if (submitLock.current) return; const data = new FormData(event.currentTarget);
     const values: RecordValues = {
       date: String(data.get("date") ?? ""), time: String(data.get("time") ?? ""),
       title: String(data.get("title") ?? "").trim(), place: String(data.get("place") ?? "").trim(),
@@ -27,11 +28,11 @@ export default function RecordForm({ trip, record }: { trip: Trip; record?: Trip
     if (Object.keys(validationErrors).length) { setErrors(validationErrors); return; }
     const now = new Date().toISOString();
     const next: TripRecord = { ...values, id: record?.id ?? createRecordId(), tripId: trip.id, amount: values.amount === "" ? null : Number(values.amount), createdAt: record?.createdAt ?? now, updatedAt: now };
-    try {
+    try { submitLock.current = true; setSubmitting(true);
       const saved = record ? updateRecord(record.id, next) : (saveRecord(next), true);
-      if (!saved) { setErrors({ storage: "編集する記録が見つかりませんでした。" }); return; }
+      if (!saved) { submitLock.current = false; setSubmitting(false); setErrors({ storage: "編集する記録が見つかりませんでした。" }); return; }
       router.push(detailHref);
-    } catch { setErrors({ storage: "記録を保存できませんでした。ブラウザの設定を確認してください。" }); }
+    } catch { submitLock.current = false; setSubmitting(false); setErrors({ storage: "記録を保存できませんでした。ブラウザの設定を確認してください。" }); }
   }
 
   return <form onSubmit={handleSubmit} noValidate className="space-y-6 pt-6">
@@ -51,7 +52,6 @@ export default function RecordForm({ trip, record }: { trip: Trip; record?: Trip
       <Field label="支出カテゴリ" required={hasAmount} error={errors.expenseCategory} htmlFor="expenseCategory"><select id="expenseCategory" name="expenseCategory" defaultValue={record?.expenseCategory ?? ""} className={inputClass}><option value="">選択してください</option>{EXPENSE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></Field>
       <Field label="支払方法" htmlFor="paymentMethod"><select id="paymentMethod" name="paymentMethod" defaultValue={record?.paymentMethod ?? ""} className={inputClass}><option value="">選択しない</option>{PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}</select></Field>
     </div></fieldset>
-    <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-stone-300 bg-stone-50/95 px-4 py-4 backdrop-blur-sm sm:static sm:mx-0 sm:justify-end sm:bg-transparent sm:px-0 sm:pb-0"><Link href={detailHref} className="inline-flex min-h-11 flex-1 items-center justify-center rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</Link><button type="submit" className="min-h-11 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">{record ? "変更を保存する" : "記録を保存する"}</button></div>
+    <FormActions cancelHref={detailHref} submitting={submitting} submitLabel={record ? "変更を保存" : "記録を保存"} />
   </form>;
 }
-function Field({ label, required, error, htmlFor, children }: { label: string; required?: boolean; error?: string; htmlFor: string; children: React.ReactNode }) { return <div><label htmlFor={htmlFor} className="text-sm font-bold">{label}{required && <span className="ml-2 text-xs font-normal text-red-700">必須</span>}</label>{children}{error && <p role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}</div>; }

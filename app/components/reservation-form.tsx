@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import {
@@ -14,9 +13,9 @@ import {
   type ReservationValues,
 } from "@/app/lib/reservations";
 import type { Trip } from "@/app/lib/trips";
+import { FormActions, FormField as Field, inputClass } from "@/app/components/ui";
 
 type FormErrors = ReturnType<typeof validateReservationValues> & { storage?: string };
-const inputClass = "mt-2 min-h-11 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base outline-none placeholder:text-stone-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
 export default function ReservationForm({ trip, reservation }: { trip: Trip; reservation?: Reservation }) {
   const router = useRouter();
@@ -25,6 +24,7 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
   const [periodConfirmed, setPeriodConfirmed] = useState(false);
   const [hasAmount, setHasAmount] = useState(reservation?.amount !== null && reservation?.amount !== undefined);
   const isSubmitting = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const detailHref = `/trips/${trip.id}`;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -53,12 +53,12 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
       createdAt: reservation?.createdAt ?? now, updatedAt: now,
     };
     try {
-      isSubmitting.current = true;
+      isSubmitting.current = true; setSubmitting(true);
       const addToExpenses = !reservation && data.get("addToExpenses") === "on";
       const saved = reservation ? updateReservation(reservation.id, next) : (saveReservationWithExpense(next, addToExpenses), true);
-      if (!saved) { isSubmitting.current = false; setErrors({ storage: "編集する予約情報が見つかりませんでした。" }); return; }
+      if (!saved) { isSubmitting.current = false; setSubmitting(false); setErrors({ storage: "編集する予約情報が見つかりませんでした。" }); return; }
       router.push(detailHref);
-    } catch { isSubmitting.current = false; setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" }); }
+    } catch { isSubmitting.current = false; setSubmitting(false); setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" }); }
   }
 
   function resetPeriodConfirmation() { setPeriodConfirmed(false); setShowPeriodWarning(false); }
@@ -80,20 +80,16 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
         <Field label="予約先・会社名" htmlFor="provider"><input id="provider" name="provider" defaultValue={reservation?.provider} placeholder="例：楽天トラベル" className={inputClass} /></Field>
         <Field label="予約番号" htmlFor="confirmationNumber"><input id="confirmationNumber" name="confirmationNumber" defaultValue={reservation?.confirmationNumber} className={inputClass} /></Field>
         <Field label="予約者名" htmlFor="reservedBy"><input id="reservedBy" name="reservedBy" defaultValue={reservation?.reservedBy} className={inputClass} /></Field>
-        <Field label="金額" error={errors.amount} htmlFor="amount"><div className="relative"><input id="amount" name="amount" type="number" min="0" step="1" defaultValue={reservation?.amount ?? ""} onChange={(event) => setHasAmount(event.target.value !== "")} className={`${inputClass} pr-10`} /><span className="absolute bottom-2.5 right-3 text-sm text-stone-500">円</span></div></Field>
+        <Field label="金額" error={errors.amount} htmlFor="amount"><div className="relative"><input id="amount" name="amount" type="number" inputMode="numeric" min="0" step="1" defaultValue={reservation?.amount ?? ""} onChange={(event) => setHasAmount(event.target.value !== "")} className={`${inputClass} pr-10`} /><span className="absolute bottom-2.5 right-3 text-sm text-stone-500">円</span></div></Field>
       </div>
       {!reservation && <label className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold ${hasAmount ? "cursor-pointer border-teal-200 bg-teal-50 text-stone-800" : "border-stone-200 bg-stone-100 text-stone-400"}`}><input name="addToExpenses" type="checkbox" disabled={!hasAmount} className="size-5 shrink-0 accent-teal-700" /><span>この金額を支出にも追加する</span></label>}
       <Field label="URL" error={errors.url} htmlFor="url"><input id="url" name="url" type="url" defaultValue={reservation?.url} placeholder="https://" className={inputClass} /></Field>
       <Field label="電話番号" htmlFor="phone"><input id="phone" name="phone" type="tel" defaultValue={reservation?.phone} className={inputClass} /></Field>
       <Field label="メモ" htmlFor="memo"><textarea id="memo" name="memo" rows={4} defaultValue={reservation?.memo} placeholder="キャンセル条件や受取方法など" className={`${inputClass} resize-y`} /></Field>
 
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-stone-300 bg-stone-50/95 px-4 py-4 backdrop-blur-sm sm:static sm:mx-0 sm:justify-end sm:bg-transparent sm:px-0 sm:pb-0">
-        <Link href={detailHref} className="inline-flex min-h-11 flex-1 items-center justify-center rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</Link>
-        <button type="submit" className="min-h-11 flex-[2] rounded bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 sm:flex-none">{reservation ? "変更を保存する" : "予約情報を保存する"}</button>
-      </div>
+      <FormActions cancelHref={detailHref} submitting={submitting} submitLabel={reservation ? "変更を保存" : "予約情報を保存"} />
     </form>
   );
 }
 
-function Field({ label, required, error, htmlFor, children }: { label: string; required?: boolean; error?: string; htmlFor: string; children: React.ReactNode }) { return <div><label htmlFor={htmlFor} className="text-sm font-bold">{label}{required && <span className="ml-2 text-xs font-normal text-red-700">必須</span>}</label>{children}{error && <p role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}</div>; }
 function Alert({ children }: { children: React.ReactNode }) { return <p role="alert" className="border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800">{children}</p>; }
