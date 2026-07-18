@@ -13,6 +13,8 @@ import { useReservations } from "@/app/lib/use-reservations";
 import { useSchedules } from "@/app/lib/use-schedules";
 import { useTrips } from "@/app/lib/use-trips";
 import CoverPhotoImage from "@/app/components/cover-photo-image";
+import { RecordPhotoViewer } from "@/app/components/record-photo-media";
+import { useRecordPhoto } from "@/app/lib/use-record-photo";
 
 export default function TripSummaryPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +63,7 @@ export default function TripSummaryPage() {
 
         <section aria-labelledby="photos-heading" className="pb-8">
           <SectionHeading id="photos-heading" eyebrow="PHOTOS">旅の写真</SectionHeading>
-          <div className="mt-4 flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-8 text-center"><span className="flex size-12 items-center justify-center rounded-full bg-stone-100 text-stone-500"><PhotoIcon /></span><p className="mt-3 font-bold">旅の写真アルバム</p><p className="mt-1 max-w-sm text-sm leading-6 text-stone-500">現在は表紙写真1枚に対応しています。将来、旅の写真一覧がここに並びます。</p></div>
+          <div className="mt-4 flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-8 text-center"><span className="flex size-12 items-center justify-center rounded-full bg-stone-100 text-stone-500"><PhotoIcon /></span><p className="mt-3 font-bold">旅の写真アルバム</p><p className="mt-1 max-w-sm text-sm leading-6 text-stone-500">写真付き記録は日別タイムラインで楽しめます。将来、旅の写真一覧がここに並びます。</p></div>
         </section>
       </>}
     </div>
@@ -89,7 +91,13 @@ function DayTimeline({ day }: { day: TripDaySummary }) {
 
 function ScheduleItem({ item }: { item: Schedule }) { return <TimelineItem icon={<CalendarIcon />} tone="teal" label="予定" time={item.startTime || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="終了" value={item.endTime} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
 function ReservationItem({ item }: { item: Reservation }) { return <TimelineItem icon={<TicketIcon />} tone="amber" label="予約" time={timeFromDateTime(item.startAt) || "時刻なし"} title={item.name}><DetailLine label="種別" value={item.type} /><DetailLine label="予約先" value={item.provider} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
-function RecordItem({ item }: { item: TripRecord }) { const isExpense = item.amount !== null; return <TimelineItem icon={isExpense ? <WalletIcon /> : <NoteIcon />} tone={isExpense ? "rose" : "stone"} label={isExpense ? "支出" : item.type === "メモ" ? "メモ" : "記録"} time={item.time || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} /><DetailLine label="カテゴリー" value={item.expenseCategory} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
+function RecordItem({ item }: { item: TripRecord }) {
+  const isExpense = item.amount !== null;
+  const { hasPhoto } = useRecordPhoto(item.id);
+  const label = isExpense ? "支出" : item.type === "メモ" ? "メモ" : "記録";
+  if (hasPhoto) return <article className="overflow-hidden rounded-xl border border-stone-200 bg-white"><div className="flex min-h-12 items-center gap-2 px-4 text-xs text-stone-500"><span className="font-bold text-teal-800">{label}</span><span>・</span><span className="tabular-nums">{item.time || "時刻なし"}</span></div><div className="px-3"><RecordPhotoViewer recordId={item.id} alt={`${item.title}の記録写真`} /></div><div className="px-4 pb-4 pt-3"><h4 className="break-words font-bold">{item.title}</h4><DetailLine label="場所" value={item.place} />{item.memo && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-stone-600">{item.memo}</p>}</div></article>;
+  return <TimelineItem icon={isExpense ? <WalletIcon /> : <NoteIcon />} tone={isExpense ? "rose" : "stone"} label={label} time={item.time || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} /><DetailLine label="カテゴリー" value={item.expenseCategory} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>;
+}
 
 const tones = { teal: "bg-teal-100 text-teal-800", amber: "bg-amber-100 text-amber-800", rose: "bg-rose-100 text-rose-800", stone: "bg-stone-200 text-stone-700" };
 function TimelineItem({ icon, tone, label, time, title, children }: { icon: ReactNode; tone: keyof typeof tones; label: string; time: string; title: string; children: ReactNode }) { return <details className="group rounded-xl border border-stone-200 bg-stone-50 open:bg-white"><summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-3 py-2 marker:hidden"><span className={`relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full ${tones[tone]}`} aria-hidden="true">{icon}</span><span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-xs text-stone-500"><span>{label}</span><span>·</span><span className="tabular-nums">{time}</span></span><span className="mt-0.5 block truncate font-bold">{title}</span></span><span className="text-xl text-stone-400 transition-transform group-open:rotate-180" aria-hidden="true">⌄</span></summary><div className="border-t border-stone-100 px-4 py-4 pl-[4.75rem]">{children || <p className="text-sm text-stone-500">追加の詳細はありません</p>}</div></details>; }

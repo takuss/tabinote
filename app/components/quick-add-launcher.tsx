@@ -4,16 +4,18 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import QuickExpenseForm from "@/app/components/quick-expense-form";
 import QuickReservationForm from "@/app/components/quick-reservation-form";
 import QuickScheduleForm from "@/app/components/quick-schedule-form";
+import QuickRecordForm from "@/app/components/quick-record-form";
 import type { Trip } from "@/app/lib/trips";
 import { OPEN_QUICK_ADD_EVENT } from "@/app/components/bottom-navigation";
 
-type AddKind = "schedule" | "expense" | "reservation";
+type AddKind = "schedule" | "expense" | "reservation" | "record";
 type AddOption = { kind: AddKind; label: string; description: string; icon: ReactNode };
 
 const ADD_OPTIONS: AddOption[] = [
   { kind: "schedule", label: "予定を追加", description: "行き先と時間をすばやく登録", icon: <CalendarIcon /> },
   { kind: "expense", label: "支出を追加", description: "旅先で使った金額を記録", icon: <WalletIcon /> },
   { kind: "reservation", label: "予約を追加", description: "宿や交通などの予約を登録", icon: <TicketIcon /> },
+  { kind: "record", label: "記録を追加", description: "写真やひとことで思い出を残す", icon: <PhotoIcon /> },
 ];
 
 export default function QuickAddLauncher({ trip, navigationOnly = false }: { trip: Trip; navigationOnly?: boolean }) {
@@ -86,6 +88,7 @@ export default function QuickAddLauncher({ trip, navigationOnly = false }: { tri
       {activeKind === "schedule" && <QuickScheduleForm key="schedule" trip={trip} onClose={() => setActiveKind(null)} />}
       {activeKind === "expense" && <QuickExpenseForm key="expense" trip={trip} onClose={() => setActiveKind(null)} />}
       {activeKind === "reservation" && <QuickReservationForm key="reservation" trip={trip} onClose={() => setActiveKind(null)} />}
+      {activeKind === "record" && <QuickRecordForm key="record" trip={trip} onClose={() => setActiveKind(null)} />}
     </div>
 
     {isMenuOpen && <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/40 sm:items-center sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
@@ -104,3 +107,4 @@ const iconClass = "size-6";
 function CalendarIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /><path d="M8 13h3v3H8z" /></svg>; }
 function WalletIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 6h14a2 2 0 0 1 2 2v11H5a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h11" /><path d="M15 11h6v5h-6a2.5 2.5 0 0 1 0-5Z" /></svg>; }
 function TicketIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4V5Z" /><path d="M12 7v2m0 2v2m0 2v2" /></svg>; }
+function PhotoIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m5 17 4-4 3 3 2-2 5 3" /></svg>; }

@@ -6,9 +6,13 @@ export const COVER_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
 
 const supportedTypes = new Set(COVER_PHOTO_ACCEPT.split(","));
 
-export async function processCoverPhoto(file: File) {
+export function validatePhotoFile(file: File) {
   if (!supportedTypes.has(file.type)) throw new Error("JPEG、PNG、WebP形式の画像を選択してください。");
   if (file.size > COVER_PHOTO_MAX_FILE_SIZE) throw new Error("画像の容量は12MB以下にしてください。");
+}
+
+export async function processCoverPhoto(file: File) {
+  validatePhotoFile(file);
 
   let bitmap: ImageBitmap;
   try {

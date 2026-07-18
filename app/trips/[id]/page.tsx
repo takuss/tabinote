@@ -15,6 +15,7 @@ import QuickAddLauncher from "@/app/components/quick-add-launcher";
 import CoverPhotoBanner from "@/app/components/cover-photo-banner";
 import CoverPhotoManager from "@/app/components/cover-photo-manager";
 import { deleteCoverPhoto } from "@/app/lib/cover-photo-storage";
+import { deleteRecordPhotosForTrip } from "@/app/lib/record-photo-storage";
 
 
 export default function TripDetailPage() {
@@ -27,7 +28,7 @@ export default function TripDetailPage() {
   async function handleTripDelete() {
     if (!trip || !window.confirm(`「${trip.title}」を削除しますか？\n日程・予約・記録もすべて削除され、この操作は取り消せません。`)) return;
     if (deleteTrip(trip.id)) {
-      try { await deleteCoverPhoto(trip.id); } catch { /* 写真機能の失敗で旅行削除を止めない */ }
+      await Promise.allSettled([deleteCoverPhoto(trip.id), deleteRecordPhotosForTrip(trip.id)]);
       router.push("/");
     }
   }

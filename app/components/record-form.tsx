@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { createRecordId, EXPENSE_CATEGORIES, PAYMENT_METHODS, RECORD_TYPES, saveRecord, updateRecord, validateRecordValues, type RecordValues, type TripRecord } from "@/app/lib/records";
 import type { Trip } from "@/app/lib/trips";
 import { FormActions, FormField as Field, inputClass } from "@/app/components/ui";
+import RecordPhotoManager from "@/app/components/record-photo-manager";
 
 type Errors = ReturnType<typeof validateRecordValues> & { storage?: string };
 
@@ -35,7 +36,7 @@ export default function RecordForm({ trip, record }: { trip: Trip; record?: Trip
     } catch { submitLock.current = false; setSubmitting(false); setErrors({ storage: "記録を保存できませんでした。ブラウザの設定を確認してください。" }); }
   }
 
-  return <form onSubmit={handleSubmit} noValidate className="space-y-6 pt-6">
+  return <>{record && <div className="pt-6"><RecordPhotoManager recordId={record.id} tripId={trip.id} alt={`${record.title}の記録写真`} /></div>}<form onSubmit={handleSubmit} noValidate className="space-y-6 pt-6">
     {errors.storage && <p role="alert" className="border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800">{errors.storage}</p>}
     <div className="grid gap-6 sm:grid-cols-2">
       <Field label="日付" required error={errors.date} htmlFor="date"><input id="date" name="date" type="date" min={trip.startDate} max={trip.endDate} defaultValue={record?.date ?? trip.startDate} className={inputClass} /></Field>
@@ -53,5 +54,5 @@ export default function RecordForm({ trip, record }: { trip: Trip; record?: Trip
       <Field label="支払方法" htmlFor="paymentMethod"><select id="paymentMethod" name="paymentMethod" defaultValue={record?.paymentMethod ?? ""} className={inputClass}><option value="">選択しない</option>{PAYMENT_METHODS.map((method) => <option key={method}>{method}</option>)}</select></Field>
     </div></fieldset>
     <FormActions cancelHref={detailHref} submitting={submitting} submitLabel={record ? "変更を保存" : "記録を保存"} />
-  </form>;
+  </form></>;
 }
