@@ -16,6 +16,8 @@ import CoverPhotoBanner from "@/app/components/cover-photo-banner";
 import CoverPhotoManager from "@/app/components/cover-photo-manager";
 import { deleteCoverPhoto } from "@/app/lib/cover-photo-storage";
 import { deleteRecordPhotosForTrip } from "@/app/lib/record-photo-storage";
+import TransportsSection from "@/app/components/transports-section";
+import NextTransportCard from "@/app/components/next-transport-card";
 
 
 export default function TripDetailPage() {
@@ -58,6 +60,8 @@ export default function TripDetailPage() {
         ) : (
           <>
             <TripDetailHero trip={trip} onDelete={handleTripDelete} />
+            <NextTransportCard trip={trip} />
+            <Link href={`/trips/${trip.id}/today`} className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-bold text-teal-800">今日の旅程を見る</Link>
 
             <QuickAddLauncher trip={trip} navigationOnly />
             <CoverPhotoManager tripId={trip.id} />
@@ -80,6 +84,7 @@ export default function TripDetailPage() {
               )}</AppCard>
             </section>
 
+            <TransportsSection trip={trip} />
             <ReservationsSection trip={trip} />
             <RecordsSections trip={trip} />
           </>

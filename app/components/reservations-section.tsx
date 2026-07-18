@@ -46,6 +46,7 @@ export default function ReservationsSection({ trip }: { trip: Trip }) {
                     {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-medium text-teal-800 hover:underline">予約ページを開く</a>}
                     {item.phone && <a href={`tel:${item.phone}`} className="font-medium text-teal-800 hover:underline">{item.phone}</a>}
                   </div>
+                  {transportMode(item) && <Link href={`/trips/${tripId}/transports/new?mode=${transportMode(item)}&service=${encodeURIComponent(item.name)}&date=${item.startAt.slice(0, 10)}&time=${item.startAt.includes("T") ? item.startAt.slice(11, 16) : ""}&fare=${item.amount ?? ""}&reservationId=${item.id}`} className="mt-2 inline-flex min-h-12 items-center text-sm font-bold text-teal-800">移動を作成</Link>}
                   {item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-500">{item.memo}</p>}
                 </div>
                 <div className="flex gap-3 text-sm sm:justify-end">
@@ -73,3 +74,4 @@ function formatReservationTime(start: string, end: string) {
   const time = (value: string) => new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false }).format(parseDateTime(value));
   return end ? `${time(start)}–${time(end)}` : time(start);
 }
+function transportMode(item: Reservation) { return item.type === "新幹線・鉄道" ? "shinkansen" : item.type === "飛行機" ? "airplane" : item.type === "高速バス" ? "highway-bus" : item.type === "レンタカー" ? "rental-car" : item.type === "フェリー" ? "ferry" : ""; }

@@ -1,6 +1,7 @@
 import { deleteReservationsForTrip } from "@/app/lib/reservations";
 import { deleteRecordsForTrip } from "@/app/lib/records";
 import { deleteSchedulesForTrip } from "@/app/lib/schedules";
+import { deleteTransportsForTrip } from "@/app/lib/transports";
 import { canParseStorageText, MAX_STORED_ITEMS } from "@/app/lib/storage-safety";
 
 export type Trip = {
@@ -76,6 +77,7 @@ export function deleteTrip(id: string) {
 
   window.localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(remainingTrips));
   deleteSchedulesForTrip(id);
+  deleteTransportsForTrip(id);
   deleteReservationsForTrip(id);
   deleteRecordsForTrip(id);
   return true;

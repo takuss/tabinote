@@ -12,6 +12,8 @@ import { useRecords } from "@/app/lib/use-records";
 import { useReservations } from "@/app/lib/use-reservations";
 import { useSchedules } from "@/app/lib/use-schedules";
 import { useTrips } from "@/app/lib/use-trips";
+import { useTransports } from "@/app/lib/use-transports";
+import { formatDuration, TRANSPORT_MODE_LABELS, transportDurationMinutes, type Transport } from "@/app/lib/transports";
 import CoverPhotoImage from "@/app/components/cover-photo-image";
 import { RecordPhotoViewer } from "@/app/components/record-photo-media";
 import { useRecordPhoto } from "@/app/lib/use-record-photo";
@@ -22,10 +24,11 @@ export default function TripSummaryPage() {
   const { schedules, isLoaded: schedulesLoaded } = useSchedules(id);
   const { reservations, isLoaded: reservationsLoaded } = useReservations(id);
   const { records, isLoaded: recordsLoaded } = useRecords(id);
+  const { transports, isLoaded: transportsLoaded } = useTransports(id);
   const [activeDay, setActiveDay] = useState(0);
   const trip = trips.find((item) => item.id === id);
-  const isLoaded = tripsLoaded && schedulesLoaded && reservationsLoaded && recordsLoaded;
-  const summary = useMemo(() => trip ? buildTripSummary(trip, schedules, reservations, records) : null, [trip, schedules, reservations, records]);
+  const isLoaded = tripsLoaded && schedulesLoaded && reservationsLoaded && recordsLoaded && transportsLoaded;
+  const summary = useMemo(() => trip ? buildTripSummary(trip, schedules, reservations, records, transports) : null, [trip, schedules, reservations, records, transports]);
 
   return <main className="min-h-screen bg-stone-100 text-stone-900">
     <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6"><Link href="/" className="text-lg font-bold tracking-tight">旅ノート</Link>{trip && <Link href={`/trips/${trip.id}`} className="inline-flex min-h-12 items-center text-sm font-bold text-teal-800 hover:underline">旅行詳細へ</Link>}</div></header>
@@ -40,7 +43,9 @@ export default function TripSummaryPage() {
             <StatCard icon={<TicketIcon />} label="予約" value={`${summary.counts.reservations}件`} />
             <StatCard icon={<WalletIcon />} label="支出合計" value={yen(summary.expenses.total)} />
             <StatCard icon={<NoteIcon />} label="記録" value={`${summary.counts.records}件`} />
+            <StatCard icon={<TrainIcon />} label="移動" value={`${summary.counts.transports}件・${formatDuration(summary.transportMinutes) || "0分"}`} />
           </dl>
+          {summary.transports.length > 0 && <p className="mt-3 text-sm text-stone-500">主な移動手段：{mainTransportModes(summary.transports)}</p>}
         </section>
 
         <section aria-labelledby="timeline-heading" className="rounded-2xl bg-white px-4 py-6 shadow-sm sm:px-7 sm:py-8">
@@ -85,12 +90,15 @@ function DayTimeline({ day }: { day: TripDaySummary }) {
     ...day.schedules.map((item) => ({ key: `s-${item.id}`, time: item.startTime, node: <ScheduleItem item={item} /> })),
     ...day.reservations.map((item) => ({ key: `b-${item.id}`, time: timeFromDateTime(item.startAt), node: <ReservationItem item={item} /> })),
     ...day.records.map((item) => ({ key: `r-${item.id}`, time: item.time, node: <RecordItem item={item} /> })),
+    ...day.transports.map((item) => ({ key: `t-${item.id}`, time: item.departureTime, node: <TransportItem item={item} /> })),
   ].sort((a, b) => (!a.time ? 1 : !b.time ? -1 : a.time.localeCompare(b.time)));
-  return <div><div className="flex items-baseline justify-between gap-4"><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <p className="text-sm tabular-nums text-stone-500">支出 {yen(day.expenseTotal)}</p>}</div>{items.length === 0 ? <Empty>この日の情報はまだありません</Empty> : <ol className="relative mt-4 space-y-3 before:absolute before:bottom-6 before:left-[23px] before:top-6 before:w-px before:bg-stone-200">{items.map((item) => <li key={item.key} className="relative">{item.node}</li>)}</ol>}</div>;
+  const route = day.transports.length ? [day.transports[0].departurePlace, ...day.transports.map((item) => item.arrivalPlace)].join(" → ") : "";
+  return <div><div className="flex items-baseline justify-between gap-4"><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <p className="text-sm tabular-nums text-stone-500">支出 {yen(day.expenseTotal)}</p>}</div>{route && <p className="mt-2 break-words text-sm font-medium text-teal-800">{route}</p>}{items.length === 0 ? <Empty>この日の情報はまだありません</Empty> : <ol className="relative mt-4 space-y-3 before:absolute before:bottom-6 before:left-[23px] before:top-6 before:w-px before:bg-stone-200">{items.map((item) => <li key={item.key} className="relative">{item.node}</li>)}</ol>}</div>;
 }
 
 function ScheduleItem({ item }: { item: Schedule }) { return <TimelineItem icon={<CalendarIcon />} tone="teal" label="予定" time={item.startTime || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="終了" value={item.endTime} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
 function ReservationItem({ item }: { item: Reservation }) { return <TimelineItem icon={<TicketIcon />} tone="amber" label="予約" time={timeFromDateTime(item.startAt) || "時刻なし"} title={item.name}><DetailLine label="種別" value={item.type} /><DetailLine label="予約先" value={item.provider} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
+function TransportItem({ item }: { item: Transport }) { return <TimelineItem icon={<TrainIcon />} tone="teal" label="移動" time={item.departureTime} title={`${item.departurePlace} → ${item.arrivalPlace}`}><DetailLine label="手段" value={`${TRANSPORT_MODE_LABELS[item.mode]} ${item.serviceName}`} /><DetailLine label="到着" value={item.arrivalTime} /><DetailLine label="所要時間" value={formatDuration(transportDurationMinutes(item))} /><DetailLine label="座席" value={[item.carNumber, item.seatNumber].filter(Boolean).join(" ")} /></TimelineItem>; }
 function RecordItem({ item }: { item: TripRecord }) {
   const isExpense = item.amount !== null;
   const { hasPhoto } = useRecordPhoto(item.id);
@@ -111,6 +119,7 @@ function yen(amount: number) { return `${new Intl.NumberFormat("ja-JP").format(a
 function timeFromDateTime(value: string) { return value.includes("T") ? value.slice(11, 16) : ""; }
 function shortDate(value: string) { const [, month, day] = value.split("-"); return `${Number(month)}/${Number(day)}`; }
 function formatDate(value: string) { const [year, month, day] = value.split("-").map(Number); const date = new Date(year, month - 1, day); return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "short" }).format(date) : value; }
+function mainTransportModes(items: Transport[]) { const counts = new Map<string, number>(); for (const item of items) counts.set(TRANSPORT_MODE_LABELS[item.mode], (counts.get(TRANSPORT_MODE_LABELS[item.mode]) ?? 0) + 1); return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([label]) => label).join("・"); }
 
 const iconClass = "size-5";
 function CalendarIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /><path d="M8 13h3v3H8z" /></svg>; }
@@ -118,3 +127,4 @@ function WalletIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="curr
 function TicketIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4V5Z" /><path d="M12 7v2m0 2v2m0 2v2" /></svg>; }
 function NoteIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M5 3h11l3 3v15H5V3Z" /><path d="M8 10h8M8 14h8M8 18h5" /></svg>; }
 function PhotoIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-6"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m5 17 4-4 3 3 2-2 5 3" /></svg>; }
+function TrainIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M8 7h8M8 13h.01M16 13h.01M8 18l-2 3m10-3 2 3"/></svg>; }

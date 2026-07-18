@@ -5,14 +5,16 @@ import QuickExpenseForm from "@/app/components/quick-expense-form";
 import QuickReservationForm from "@/app/components/quick-reservation-form";
 import QuickScheduleForm from "@/app/components/quick-schedule-form";
 import QuickRecordForm from "@/app/components/quick-record-form";
+import QuickTransportForm from "@/app/components/quick-transport-form";
 import type { Trip } from "@/app/lib/trips";
 import { OPEN_QUICK_ADD_EVENT } from "@/app/components/bottom-navigation";
 
-type AddKind = "schedule" | "expense" | "reservation" | "record";
+type AddKind = "schedule" | "transport" | "expense" | "reservation" | "record";
 type AddOption = { kind: AddKind; label: string; description: string; icon: ReactNode };
 
 const ADD_OPTIONS: AddOption[] = [
   { kind: "schedule", label: "予定を追加", description: "行き先と時間をすばやく登録", icon: <CalendarIcon /> },
+  { kind: "transport", label: "移動を追加", description: "乗り物と移動経路を登録", icon: <TrainIcon /> },
   { kind: "expense", label: "支出を追加", description: "旅先で使った金額を記録", icon: <WalletIcon /> },
   { kind: "reservation", label: "予約を追加", description: "宿や交通などの予約を登録", icon: <TicketIcon /> },
   { kind: "record", label: "記録を追加", description: "写真やひとことで思い出を残す", icon: <PhotoIcon /> },
@@ -86,6 +88,7 @@ export default function QuickAddLauncher({ trip, navigationOnly = false }: { tri
 
     <div ref={formRegionRef} aria-live="polite">
       {activeKind === "schedule" && <QuickScheduleForm key="schedule" trip={trip} onClose={() => setActiveKind(null)} />}
+      {activeKind === "transport" && <QuickTransportForm key="transport" trip={trip} onClose={() => setActiveKind(null)} />}
       {activeKind === "expense" && <QuickExpenseForm key="expense" trip={trip} onClose={() => setActiveKind(null)} />}
       {activeKind === "reservation" && <QuickReservationForm key="reservation" trip={trip} onClose={() => setActiveKind(null)} />}
       {activeKind === "record" && <QuickRecordForm key="record" trip={trip} onClose={() => setActiveKind(null)} />}
@@ -108,3 +111,4 @@ function CalendarIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="cu
 function WalletIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 6h14a2 2 0 0 1 2 2v11H5a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h11" /><path d="M15 11h6v5h-6a2.5 2.5 0 0 1 0-5Z" /></svg>; }
 function TicketIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4V5Z" /><path d="M12 7v2m0 2v2m0 2v2" /></svg>; }
 function PhotoIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m5 17 4-4 3 3 2-2 5 3" /></svg>; }
+function TrainIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M8 7h8M8 13h.01M16 13h.01M8 18l-2 3m10-3 2 3"/></svg>; }

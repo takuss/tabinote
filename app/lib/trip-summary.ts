@@ -2,12 +2,14 @@ import { sortRecords, summarizeExpenses, type TripRecord } from "@/app/lib/recor
 import { sortReservations, type Reservation } from "@/app/lib/reservations";
 import { sortSchedules, type Schedule } from "@/app/lib/schedules";
 import type { Trip } from "@/app/lib/trips";
+import { sortTransports, transportDurationMinutes, type Transport } from "@/app/lib/transports";
 
 export type TripDaySummary = {
   date: string;
   schedules: Schedule[];
   reservations: Reservation[];
   records: TripRecord[];
+  transports: Transport[];
   expenseTotal: number;
 };
 
@@ -78,6 +80,7 @@ export function groupTripByDay(
   schedules: Schedule[],
   reservations: Reservation[],
   records: TripRecord[],
+  transports: Transport[] = [],
 ): TripDaySummary[] {
   const sortedSchedules = sortSchedules(schedules);
   const sortedReservations = sortReservations(reservations);
@@ -88,6 +91,7 @@ export function groupTripByDay(
     (reservation) => reservation.startAt.slice(0, 10),
   );
   const recordsByDate = groupByDate(sortedRecords, (record) => record.date);
+  const transportsByDate = groupByDate(sortTransports(transports), (item) => item.departureDate);
   return getTripDates(trip.startDate, trip.endDate).map((date) => {
     const dayRecords = recordsByDate.get(date) ?? [];
     return {
@@ -95,6 +99,7 @@ export function groupTripByDay(
       schedules: schedulesByDate.get(date) ?? [],
       reservations: reservationsByDate.get(date) ?? [],
       records: dayRecords,
+      transports: transportsByDate.get(date) ?? [],
       expenseTotal: dayRecords.reduce((sum, record) => sum + (record.amount ?? 0), 0),
     };
   });
@@ -116,6 +121,7 @@ export function buildTripSummary(
   schedules: Schedule[],
   reservations: Reservation[],
   records: TripRecord[],
+  transports: Transport[] = [],
 ) {
   return {
     duration: getTripDuration(trip.startDate, trip.endDate),
@@ -123,10 +129,13 @@ export function buildTripSummary(
       schedules: schedules.length,
       reservations: reservations.length,
       records: records.length,
+      transports: transports.length,
       places: countUniqueVisitedPlaces(records),
     },
-    days: groupTripByDay(trip, schedules, reservations, records),
+    days: groupTripByDay(trip, schedules, reservations, records, transports),
     expenses: getExpenseBreakdown(records),
     records: sortRecords(records),
+    transports: sortTransports(transports),
+    transportMinutes: transports.reduce((sum, item) => sum + (transportDurationMinutes(item) ?? 0), 0),
   };
 }
