@@ -19,7 +19,7 @@ export default function Home() {
           const status = getTripStatus(trip);
           const duration = getTripDuration(trip.startDate, trip.endDate);
           return <li key={trip.id}><Link href={`/trips/${trip.id}`} className="group block overflow-hidden rounded-2xl bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><article>
-            <div className="relative flex aspect-[16/8] flex-col justify-between overflow-hidden bg-teal-800 p-5 text-white">
+            <div className="relative flex aspect-video w-full flex-col justify-between overflow-hidden bg-teal-800 p-5 text-white">
               <CoverPhotoImage tripId={trip.id} alt={`${trip.title}の表紙写真`} />
               <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
               <div className="absolute -right-10 -top-12 size-40 rounded-full border-[24px] border-white/10" aria-hidden="true" />

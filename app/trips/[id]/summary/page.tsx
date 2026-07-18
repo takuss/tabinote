@@ -70,11 +70,11 @@ export default function TripSummaryPage() {
 
 function Hero({ trip, days }: { trip: Trip; days: number }) {
   const status = getTripStatus(trip);
-  return <section className="relative min-h-72 overflow-hidden rounded-2xl bg-teal-800 p-6 text-white sm:min-h-80 sm:p-10">
+  return <section className="relative aspect-[3/2] min-h-[240px] max-h-[440px] w-full max-w-full overflow-hidden rounded-2xl bg-teal-800 p-6 text-white sm:aspect-video sm:p-8 lg:p-10">
     <CoverPhotoImage tripId={trip.id} alt={`${trip.title}の表紙写真`} />
-    <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/35" aria-hidden="true" />
     <div className="absolute -right-16 -top-20 size-64 rounded-full border-[36px] border-white/10" aria-hidden="true" /><div className="absolute -bottom-24 left-1/3 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-    <div className="relative flex min-h-60 flex-col justify-between sm:min-h-64"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.25em] text-white/75">TRIP MEMORY</p><span className="rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-bold">{status.label}</span></div><div><p className="text-sm font-medium text-white/80">{trip.destination}</p><h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{trip.title}</h1><div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85"><span>{formatTripDateRange(trip.startDate, trip.endDate)}</span><span className="h-4 w-px bg-white/35" aria-hidden="true" /><span className="font-bold">{days}日間</span></div></div></div>
+    <div className="relative flex h-full min-h-0 flex-col justify-between"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.25em] text-white/75">TRIP MEMORY</p><span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-xs font-bold">{status.label}</span></div><div className="min-w-0"><p className="truncate text-sm font-medium text-white/80">{trip.destination}</p><h1 className="mt-2 line-clamp-3 max-w-3xl break-words text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{trip.title}</h1><div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85"><span>{formatTripDateRange(trip.startDate, trip.endDate)}</span><span className="h-4 w-px bg-white/35" aria-hidden="true" /><span className="font-bold">{days}日間</span></div></div></div>
   </section>;
 }
 
