@@ -12,6 +12,9 @@ import { useTrips } from "@/app/lib/use-trips";
 import ReservationsSection from "@/app/components/reservations-section";
 import RecordsSections from "@/app/components/records-sections";
 import QuickAddLauncher from "@/app/components/quick-add-launcher";
+import CoverPhotoBanner from "@/app/components/cover-photo-banner";
+import CoverPhotoManager from "@/app/components/cover-photo-manager";
+import { deleteCoverPhoto } from "@/app/lib/cover-photo-storage";
 
 
 export default function TripDetailPage() {
@@ -21,9 +24,12 @@ export default function TripDetailPage() {
   const { schedules, isLoaded: schedulesLoaded } = useSchedules(id);
   const trip = trips.find((item) => item.id === id);
 
-  function handleTripDelete() {
+  async function handleTripDelete() {
     if (!trip || !window.confirm(`「${trip.title}」を削除しますか？\n日程・予約・記録もすべて削除され、この操作は取り消せません。`)) return;
-    if (deleteTrip(trip.id)) router.push("/");
+    if (deleteTrip(trip.id)) {
+      try { await deleteCoverPhoto(trip.id); } catch { /* 写真機能の失敗で旅行削除を止めない */ }
+      router.push("/");
+    }
   }
 
   function handleScheduleDelete(schedule: Schedule) {
@@ -53,6 +59,8 @@ export default function TripDetailPage() {
             <section className="relative overflow-hidden rounded-2xl bg-teal-800 p-5 text-white sm:p-7"><div className="absolute -right-12 -top-14 size-44 rounded-full border-[26px] border-white/10" aria-hidden="true" /><div className="relative"><div className="flex items-start justify-between gap-3"><Link href="/" className="inline-flex min-h-12 items-center text-sm font-bold text-white/80 hover:text-white">← 旅行一覧</Link><StatusBadge className={getTripStatus(trip).className}>{getTripStatus(trip).label}</StatusBadge></div><p className="mt-5 text-sm text-white/70">{trip.destination}</p><h1 className="mt-1 break-words text-3xl font-bold tracking-tight sm:text-4xl">{trip.title}</h1><p className="mt-3 text-sm text-white/80">{formatTripDateRange(trip.startDate, trip.endDate)}・{getTripDuration(trip.startDate, trip.endDate).days}日間</p><div className="mt-6 flex flex-wrap gap-3"><Link href={`/trips/${trip.id}/summary`} className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-bold text-teal-800 sm:flex-none">旅のまとめ</Link><Link href={`/trips/${trip.id}/edit`} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white/15 px-4 text-sm font-bold text-white hover:bg-white/20">編集</Link><button type="button" onClick={handleTripDelete} className="inline-flex min-h-12 items-center px-2 text-sm font-medium text-white/65 hover:text-white">削除</button></div></div></section>
 
             <QuickAddLauncher trip={trip} navigationOnly />
+            <CoverPhotoBanner tripId={trip.id} alt={`${trip.title}の表紙写真`} />
+            <CoverPhotoManager tripId={trip.id} />
 
             <details className="mt-5 rounded-2xl bg-white px-4 open:pb-2 sm:px-5"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">旅行情報<span className="text-stone-400" aria-hidden="true">⌄</span></summary><dl className="divide-y divide-stone-100">
                 <DetailRow label="行き先" value={trip.destination} />

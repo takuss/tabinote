@@ -12,6 +12,7 @@ import { useRecords } from "@/app/lib/use-records";
 import { useReservations } from "@/app/lib/use-reservations";
 import { useSchedules } from "@/app/lib/use-schedules";
 import { useTrips } from "@/app/lib/use-trips";
+import CoverPhotoImage from "@/app/components/cover-photo-image";
 
 export default function TripSummaryPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,7 +61,7 @@ export default function TripSummaryPage() {
 
         <section aria-labelledby="photos-heading" className="pb-8">
           <SectionHeading id="photos-heading" eyebrow="PHOTOS">旅の写真</SectionHeading>
-          <div className="mt-4 flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-8 text-center"><span className="flex size-12 items-center justify-center rounded-full bg-stone-100 text-stone-500"><PhotoIcon /></span><p className="mt-3 font-bold">写真で旅を振り返る場所</p><p className="mt-1 max-w-sm text-sm leading-6 text-stone-500">写真機能の追加後、この場所に旅行の思い出が並びます。</p></div>
+          <div className="mt-4 flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-8 text-center"><span className="flex size-12 items-center justify-center rounded-full bg-stone-100 text-stone-500"><PhotoIcon /></span><p className="mt-3 font-bold">旅の写真アルバム</p><p className="mt-1 max-w-sm text-sm leading-6 text-stone-500">現在は表紙写真1枚に対応しています。将来、旅の写真一覧がここに並びます。</p></div>
         </section>
       </>}
     </div>
@@ -70,6 +71,8 @@ export default function TripSummaryPage() {
 function Hero({ trip, days }: { trip: Trip; days: number }) {
   const status = getTripStatus(trip);
   return <section className="relative min-h-72 overflow-hidden rounded-2xl bg-teal-800 p-6 text-white sm:min-h-80 sm:p-10">
+    <CoverPhotoImage tripId={trip.id} alt={`${trip.title}の表紙写真`} />
+    <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
     <div className="absolute -right-16 -top-20 size-64 rounded-full border-[36px] border-white/10" aria-hidden="true" /><div className="absolute -bottom-24 left-1/3 size-72 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
     <div className="relative flex min-h-60 flex-col justify-between sm:min-h-64"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold tracking-[0.25em] text-white/75">TRIP MEMORY</p><span className="rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-bold">{status.label}</span></div><div><p className="text-sm font-medium text-white/80">{trip.destination}</p><h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{trip.title}</h1><div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/85"><span>{formatTripDateRange(trip.startDate, trip.endDate)}</span><span className="h-4 w-px bg-white/35" aria-hidden="true" /><span className="font-bold">{days}日間</span></div></div></div>
   </section>;
