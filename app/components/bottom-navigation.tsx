@@ -24,7 +24,7 @@ export default function BottomNavigation() {
   }
 
   return <nav aria-label="メインナビゲーション" className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:inset-x-auto md:bottom-auto md:left-5 md:top-1/2 md:-translate-y-1/2 md:rounded-2xl md:border md:p-2 md:shadow-sm">
-    <div className="mx-auto grid h-[4.75rem] max-w-lg grid-cols-4 items-end px-2 md:h-auto md:w-[5.25rem] md:grid-cols-1 md:items-stretch md:gap-1 md:px-0">
+    <div className="mx-auto grid h-[5rem] max-w-lg grid-cols-4 items-end gap-1 px-2 md:h-auto md:w-[5.25rem] md:grid-cols-1 md:items-stretch md:gap-1 md:px-0">
       <NavLink href="/" label="ホーム" active={pathname === "/"} icon={<HomeIcon />} />
       {tripId ? <NavLink href={tripHref} label="旅行" active={!isSummary} icon={<SuitcaseIcon />} /> : <DisabledItem label="旅行" icon={<SuitcaseIcon />} hint="旅行を選ぶと開けます" />}
       <div className="flex min-h-16 items-end justify-center md:min-h-0 md:items-center md:py-1">
@@ -36,7 +36,7 @@ export default function BottomNavigation() {
 }
 
 function NavLink({ href, label, active, icon }: { href: string; label: string; active: boolean; icon: ReactNode }) {
-  return <Link href={href} aria-label={label} aria-current={active ? "page" : undefined} className={`flex min-h-16 flex-col items-center justify-center rounded-xl px-2 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 md:min-h-14 ${active ? "text-teal-700" : "text-stone-500 hover:bg-stone-100 hover:text-stone-800"}`}><span aria-hidden="true">{icon}</span><span className="mt-1">{label}</span>{active && <span className="mt-1 h-1 w-1 rounded-full bg-teal-700 md:hidden" aria-hidden="true" />}</Link>;
+  return <Link href={href} aria-label={label} aria-current={active ? "page" : undefined} className={`flex min-h-[3.5rem] flex-col items-center justify-center rounded-xl px-2 text-xs font-bold transition active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 md:min-h-14 ${active ? "bg-teal-50 text-teal-800" : "text-stone-500 hover:bg-stone-100 hover:text-stone-800"}`}><span aria-hidden="true">{icon}</span><span className="mt-1">{label}</span><span className="sr-only">{active ? "現在のページ" : ""}</span></Link>;
 }
 
 function DisabledItem({ label, icon, hint }: { label: string; icon: ReactNode; hint: string }) {

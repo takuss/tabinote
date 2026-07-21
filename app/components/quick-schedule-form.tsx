@@ -92,7 +92,7 @@ export default function QuickScheduleForm({ trip, onClose, initialDate }: { trip
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">
+    <form onSubmit={handleSubmit} noValidate className="quick-add-form mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-bold">予定のクイック追加</h3>
         <span className="text-xs text-stone-500">必須項目は3つだけ</span>

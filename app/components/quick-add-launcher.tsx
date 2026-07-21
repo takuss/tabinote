@@ -86,6 +86,10 @@ export default function QuickAddLauncher({ trip, navigationOnly = false, experie
     });
   }
 
+  const options = orderedOptions(resolvedExperience);
+  const primaryOption = options[0];
+  const secondaryOptions = options.slice(1);
+
   return <section aria-label="クイック追加" className={navigationOnly ? "" : "border-b border-stone-300 py-6"}>
     {!navigationOnly && <div className="flex items-center justify-between gap-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-4 sm:px-5">
       <div><h2 id="quick-add-heading" className="font-bold">旅の情報を追加</h2><p className="mt-1 text-sm text-stone-600">予定・支出・予約をここからすぐに登録できます</p></div>
@@ -104,8 +108,9 @@ export default function QuickAddLauncher({ trip, navigationOnly = false, experie
       <div ref={sheetRef} id="quick-add-sheet" role="dialog" aria-modal="true" aria-labelledby="quick-add-menu-title" className="w-full max-w-lg rounded-t-2xl bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl sm:rounded-2xl sm:p-5">
         <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-stone-300 sm:hidden" aria-hidden="true" />
         <div className="flex min-h-12 items-center justify-between gap-4"><h2 id="quick-add-menu-title" className="text-lg font-bold">何を追加しますか？</h2><button type="button" onClick={() => closeMenu()} aria-label="追加メニューを閉じる" className="inline-flex size-12 items-center justify-center rounded-full text-2xl text-stone-600 hover:bg-stone-100">×</button></div>
-        <div className="mt-2 divide-y divide-stone-200">
-          {orderedOptions(resolvedExperience).map((option) => <button key={option.kind} type="button" onClick={() => selectKind(option.kind)} className="flex min-h-[72px] w-full items-center gap-4 rounded-lg px-2 py-3 text-left hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-teal-700"><span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-800" aria-hidden="true">{option.icon}</span><span><span className="block font-bold">{option.label}</span><span className="mt-0.5 block text-sm text-stone-500">{option.description}</span></span><span className="ml-auto text-stone-400" aria-hidden="true">›</span></button>)}
+        <button type="button" onClick={() => selectKind(primaryOption.kind)} className="mt-2 flex min-h-20 w-full items-center gap-4 rounded-2xl bg-teal-700 px-4 py-3 text-left text-white active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/15" aria-hidden="true">{primaryOption.icon}</span><span><span className="block font-bold">{primaryOption.label}</span><span className="mt-0.5 line-clamp-1 block text-sm text-white/75">{primaryOption.description}</span></span><span className="ml-auto text-white/70" aria-hidden="true">›</span></button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {secondaryOptions.map((option) => <button key={option.kind} type="button" onClick={() => selectKind(option.kind)} className="flex min-h-24 min-w-0 flex-col items-start justify-center rounded-xl bg-stone-100 px-3 py-3 text-left active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-700"><span className="flex size-10 items-center justify-center rounded-full bg-white text-teal-800" aria-hidden="true">{option.icon}</span><span className="mt-2 block break-words text-sm font-bold leading-5">{option.label}</span><span className="mt-0.5 line-clamp-1 block max-w-full text-xs text-stone-500">{option.description}</span></button>)}
         </div>
       </div>
     </div>}
