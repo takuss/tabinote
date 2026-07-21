@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { deleteSchedule, sortSchedules, type Schedule } from "@/app/lib/schedules";
 import { useSchedules } from "@/app/lib/use-schedules";
 import { deleteTrip, formatTripDate, formatTripDateRange, getTripStatus, type Trip } from "@/app/lib/trips";
@@ -28,6 +28,7 @@ export default function TripDetailPage() {
   const { trips, isLoaded } = useTrips();
   const { schedules, isLoaded: schedulesLoaded } = useSchedules(id);
   const trip = trips.find((item) => item.id === id);
+  const [quickDate, setQuickDate] = useState("");
 
   async function handleTripDelete() {
     if (!trip || !window.confirm(`「${trip.title}」を削除しますか？\n日程・予約・記録もすべて削除され、この操作は取り消せません。`)) return;
@@ -64,9 +65,9 @@ export default function TripDetailPage() {
             <TripDetailHero trip={trip} onDelete={handleTripDelete} />
             <TripExperienceNav trip={trip} active="plan" />
             <NextTransportCard trip={trip} />
-            <PlanFlow trip={trip} />
+            <PlanFlow trip={trip} onActiveDateChange={setQuickDate} />
 
-            <QuickAddLauncher trip={trip} navigationOnly />
+            <QuickAddLauncher trip={trip} navigationOnly initialDate={quickDate} />
             <CoverPhotoManager tripId={trip.id} />
 
             <details className="mt-5 rounded-2xl bg-white px-4 open:pb-2 sm:px-5"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">旅行情報<span className="text-stone-400" aria-hidden="true">⌄</span></summary><dl className="divide-y divide-stone-100">

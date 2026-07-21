@@ -10,18 +10,13 @@ import {
   type ReservationValues,
 } from "@/app/lib/reservations";
 import type { Trip } from "@/app/lib/trips";
+import { getQuickInitialDate } from "@/app/lib/quick-form-defaults";
 
 type Errors = ReturnType<typeof validateReservationValues> & { date?: string; storage?: string };
 const inputClass = "mt-2 min-h-12 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base text-stone-900 outline-none placeholder:text-stone-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
-function getInitialDate(trip: Trip) {
-  const now = new Date();
-  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
-  return today >= trip.startDate && today <= trip.endDate ? today : trip.startDate;
-}
-
-export default function QuickReservationForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
-  const [initialDate] = useState(() => getInitialDate(trip));
+export default function QuickReservationForm({ trip, onClose, initialDate: preferredDate }: { trip: Trip; onClose: () => void; initialDate?: string }) {
+  const [initialDate] = useState(() => getQuickInitialDate(trip, preferredDate));
   const [errors, setErrors] = useState<Errors>({});
   const [hasAmount, setHasAmount] = useState(false);
   const isSubmitting = useRef(false);

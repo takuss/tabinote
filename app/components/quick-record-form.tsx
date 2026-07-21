@@ -7,17 +7,17 @@ import { COVER_PHOTO_ACCEPT, COVER_PHOTO_MAX_FILE_SIZE, processCoverPhoto, valid
 import { saveRecordPhoto } from "@/app/lib/record-photo-storage";
 import type { Trip } from "@/app/lib/trips";
 import { inputClass } from "@/app/components/ui";
+import { getQuickInitialDate } from "@/app/lib/quick-form-defaults";
 
 type Errors = Partial<Record<"content" | "date" | "photo" | "storage", string>>;
 
-function initialValues(trip: Trip) {
+function initialValues(trip: Trip, preferredDate?: string) {
   const now = new Date();
-  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
-  return { date: today >= trip.startDate && today <= trip.endDate ? today : trip.startDate, time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` };
+  return { date: getQuickInitialDate(trip, preferredDate), time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` };
 }
 
-export default function QuickRecordForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
-  const [initial] = useState(() => initialValues(trip));
+export default function QuickRecordForm({ trip, onClose, initialDate }: { trip: Trip; onClose: () => void; initialDate?: string }) {
+  const [initial] = useState(() => initialValues(trip, initialDate));
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Errors>({});

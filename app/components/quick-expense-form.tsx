@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { createRecordId, saveRecord, type ExpenseCategory, type RecordType, type TripRecord } from "@/app/lib/records";
 import type { Trip } from "@/app/lib/trips";
+import { getQuickInitialDate } from "@/app/lib/quick-form-defaults";
 
 const QUICK_CATEGORIES = ["食事", "交通", "宿泊", "観光", "買い物", "その他"] as const;
 type QuickCategory = (typeof QUICK_CATEGORIES)[number];
@@ -10,11 +11,10 @@ type Errors = Partial<Record<"amount" | "category" | "date" | "storage", string>
 
 const inputClass = "mt-2 min-h-12 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base text-stone-900 outline-none focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
-function getInitialValues(trip: Trip) {
+function getInitialValues(trip: Trip, preferredDate?: string) {
   const now = new Date();
-  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
   return {
-    date: today >= trip.startDate && today <= trip.endDate ? today : trip.startDate,
+    date: getQuickInitialDate(trip, preferredDate),
     time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
   };
 }
@@ -29,9 +29,9 @@ function toRecordType(category: QuickCategory): RecordType {
   return category;
 }
 
-export default function QuickExpenseForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
+export default function QuickExpenseForm({ trip, onClose, initialDate }: { trip: Trip; onClose: () => void; initialDate?: string }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [initialValues] = useState(() => getInitialValues(trip));
+  const [initialValues] = useState(() => getInitialValues(trip, initialDate));
   const [submitting, setSubmitting] = useState(false);
   const submitLock = useRef(false);
 

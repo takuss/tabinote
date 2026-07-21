@@ -25,6 +25,7 @@ export function deleteTransport(id: string) { const items = loadTransports(); co
 export function deleteTransportsForTrip(tripId: string) { const items = loadTransports(); const next = items.filter((x) => x.tripId !== tripId); if (next.length !== items.length) write(next); }
 export function createTransportId() { const ids = new Set(loadTransports().map((x) => x.id)); let id = crypto.randomUUID(); while (ids.has(id)) id = crypto.randomUUID(); return id; }
 export function sortTransports(items: Transport[]) { return [...items].sort((a, b) => transportDeparture(a).localeCompare(transportDeparture(b))); }
+export function findPreviousTransport(items: Transport[], departureDate: string, departureTime: string, excludeId?: string) { const target = `${departureDate}T${departureTime || "23:59"}`; return sortTransports(items).filter((item) => item.id !== excludeId && transportDeparture(item) < target).at(-1); }
 export function transportDeparture(item: Transport) { return `${item.departureDate}T${item.departureTime}`; }
 export function transportArrival(item: Transport) { return item.arrivalTime ? `${item.arrivalDate || item.departureDate}T${item.arrivalTime}` : ""; }
 export function transportDurationMinutes(item: Transport) { const end = transportArrival(item); if (!end) return null; const ms = new Date(end).getTime() - new Date(transportDeparture(item)).getTime(); return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 60000) : null; }

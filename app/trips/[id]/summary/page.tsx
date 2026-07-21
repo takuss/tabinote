@@ -40,7 +40,7 @@ export default function TripSummaryPage() {
       {!isLoaded ? <p className="py-10 text-sm text-stone-500">旅のまとめを読み込んでいます…</p> : !trip || !summary ? <Missing /> : <>
         <Hero trip={trip} days={summary.duration.days} />
         <TripExperienceNav trip={trip} active="memories" />
-        <QuickAddLauncher trip={trip} navigationOnly experience="memories" />
+        <QuickAddLauncher trip={trip} navigationOnly experience="memories" initialDate={summary.days[activeDay]?.date} />
 
         <section aria-labelledby="overview-heading" className="py-7 sm:py-9">
           <SectionHeading id="overview-heading" eyebrow="AT A GLANCE">旅の概要</SectionHeading>

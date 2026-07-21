@@ -3,22 +3,17 @@
 import { useRef, useState, type FormEvent } from "react";
 import { createScheduleId, saveSchedule, type Schedule } from "@/app/lib/schedules";
 import { formatTripDate, type Trip } from "@/app/lib/trips";
+import { getQuickInitialDate } from "@/app/lib/quick-form-defaults";
 
 type Errors = Partial<Record<"date" | "startTime" | "endTime" | "place" | "storage", string>>;
 
 const inputClass =
   "mt-2 min-h-12 w-full rounded border border-stone-400 bg-white px-3 py-2 text-base text-stone-900 outline-none focus:border-teal-700 focus:ring-1 focus:ring-teal-700";
 
-function getInitialValues(trip: Trip) {
+function getInitialValues(trip: Trip, preferredDate?: string) {
   const now = new Date();
-  const localDate = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0"),
-  ].join("-");
-
   return {
-    date: localDate >= trip.startDate && localDate <= trip.endDate ? localDate : trip.startDate,
+    date: getQuickInitialDate(trip, preferredDate),
     startTime: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
   };
 }
@@ -39,9 +34,9 @@ function getTripDates(startDate: string, endDate: string) {
   return dates;
 }
 
-export default function QuickScheduleForm({ trip, onClose }: { trip: Trip; onClose: () => void }) {
+export default function QuickScheduleForm({ trip, onClose, initialDate }: { trip: Trip; onClose: () => void; initialDate?: string }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [initialValues] = useState(() => getInitialValues(trip));
+  const [initialValues] = useState(() => getInitialValues(trip, initialDate));
   const [submitting, setSubmitting] = useState(false);
   const submitLock = useRef(false);
   const tripDates = getTripDates(trip.startDate, trip.endDate);

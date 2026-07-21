@@ -22,7 +22,7 @@ const ADD_OPTIONS: AddOption[] = [
 ];
 export const OPEN_QUICK_RECORD_EVENT = "tabinote:open-quick-record";
 
-export default function QuickAddLauncher({ trip, navigationOnly = false, experience = "plan" }: { trip: Trip; navigationOnly?: boolean; experience?: "plan" | "today" | "memories" }) {
+export default function QuickAddLauncher({ trip, navigationOnly = false, experience = "plan", initialDate }: { trip: Trip; navigationOnly?: boolean; experience?: "plan" | "today" | "memories"; initialDate?: string }) {
   const pathname = usePathname();
   const resolvedExperience = pathname.endsWith("/today") ? "today" : pathname.endsWith("/summary") ? "memories" : experience;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -93,11 +93,11 @@ export default function QuickAddLauncher({ trip, navigationOnly = false, experie
     </div>}
 
     <div ref={formRegionRef} aria-live="polite">
-      {activeKind === "schedule" && <QuickScheduleForm key="schedule" trip={trip} onClose={() => setActiveKind(null)} />}
-      {activeKind === "transport" && <QuickTransportForm key="transport" trip={trip} onClose={() => setActiveKind(null)} />}
-      {activeKind === "expense" && <QuickExpenseForm key="expense" trip={trip} onClose={() => setActiveKind(null)} />}
-      {activeKind === "reservation" && <QuickReservationForm key="reservation" trip={trip} onClose={() => setActiveKind(null)} />}
-      {activeKind === "record" && <QuickRecordForm key="record" trip={trip} onClose={() => setActiveKind(null)} />}
+      {activeKind === "schedule" && <QuickScheduleForm key="schedule" trip={trip} initialDate={initialDate} onClose={() => setActiveKind(null)} />}
+      {activeKind === "transport" && <QuickTransportForm key="transport" trip={trip} initialDate={initialDate} onClose={() => setActiveKind(null)} />}
+      {activeKind === "expense" && <QuickExpenseForm key="expense" trip={trip} initialDate={initialDate} onClose={() => setActiveKind(null)} />}
+      {activeKind === "reservation" && <QuickReservationForm key="reservation" trip={trip} initialDate={initialDate} onClose={() => setActiveKind(null)} />}
+      {activeKind === "record" && <QuickRecordForm key="record" trip={trip} initialDate={initialDate} onClose={() => setActiveKind(null)} />}
     </div>
 
     {isMenuOpen && <div className="fixed inset-0 z-50 flex items-end justify-center bg-stone-950/40 sm:items-center sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
