@@ -47,7 +47,7 @@ export default function TripSummaryPage() {
           <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard icon={<PhotoIcon />} label="写真" value={`${photoCount}枚`} />
             <StatCard icon={<CalendarIcon />} label="訪れた場所" value={`${summary.counts.places}か所`} />
-            <StatCard icon={<WalletIcon />} label="支出合計" value={yen(summary.expenses.total)} />
+            <StatCard icon={<WalletIcon />} label="主な旅行費用・登録分" value={yen(summary.expenses.total)} />
             <StatCard icon={<NoteIcon />} label="記録" value={`${summary.counts.records}件`} />
             <StatCard icon={<TrainIcon />} label="移動" value={`${summary.counts.transports}件・${formatDuration(summary.transportMinutes) || "0分"}`} />
           </dl>
@@ -65,11 +65,11 @@ export default function TripSummaryPage() {
         </section>
 
         <section aria-labelledby="expense-heading" className="py-7 sm:py-9">
-          <SectionHeading id="expense-heading" eyebrow="EXPENSES">支出の内訳</SectionHeading>
-          {summary.expenses.count === 0 ? <Empty>まだ支出の記録がありません</Empty> : <div className="mt-4 rounded-2xl bg-white p-5 shadow-sm sm:p-7">
-            <div className="flex items-end justify-between gap-4 border-b border-stone-200 pb-5"><div><p className="text-sm text-stone-500">旅行全体</p><p className="mt-1 text-2xl font-bold tabular-nums">{yen(summary.expenses.total)}</p></div><p className="text-sm text-stone-500">{summary.expenses.count}件</p></div>
-            <div className="mt-2 divide-y divide-stone-100">{summary.expenses.categories.map((item) => <div key={item.category} className="py-4"><div className="flex items-baseline justify-between gap-4"><p className="text-sm font-bold">{item.category}</p><p className="text-sm tabular-nums">{yen(item.amount)} <span className="text-stone-400">{item.percentage}%</span></p></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-100" aria-label={`${item.category} ${item.percentage}%`}><div className="h-full rounded-full bg-teal-600" style={{ width: `${item.percentage}%` }} /></div></div>)}</div>
-          </div>}
+          <SectionHeading id="expense-heading" eyebrow="COSTS">主な旅行費用（登録分）</SectionHeading>
+          <div className="mt-4 rounded-2xl bg-white p-5 sm:p-6">
+            <div className="flex items-end justify-between gap-4 border-b border-stone-100 pb-4"><div><p className="text-sm text-stone-500">予約・移動・その他の費用</p><p className="mt-1 break-all text-2xl font-bold tabular-nums">{yen(summary.expenses.total)}</p></div><p className="text-xs text-stone-400">{summary.expenses.count}件の登録分</p></div>
+            {summary.expenses.count === 0 ? <p className="py-5 text-sm text-stone-500">金額はまだ登録されていません</p> : <div className="mt-2 divide-y divide-stone-100">{summary.expenses.categories.filter((item) => item.amount > 0).map((item) => <div key={item.category} className="flex items-baseline justify-between gap-4 py-3"><p className="text-sm font-medium">{item.category}</p><p className="text-sm tabular-nums">{yen(item.amount)} <span className="text-stone-400">{item.percentage}%</span></p></div>)}</div>}
+          </div>
         </section>
 
         <section aria-labelledby="photos-heading" className="pb-8">
@@ -99,7 +99,7 @@ function DayTimeline({ day }: { day: TripDaySummary }) {
     ...day.transports.map((item) => ({ key: `t-${item.id}`, time: item.departureTime, node: <TransportItem item={item} /> })),
   ].sort((a, b) => (!a.time ? 1 : !b.time ? -1 : a.time.localeCompare(b.time)));
   const route = day.transports.length ? [day.transports[0].departurePlace, ...day.transports.map((item) => item.arrivalPlace)].join(" → ") : "";
-  return <div><div className="flex items-baseline justify-between gap-4"><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <p className="text-sm tabular-nums text-stone-500">支出 {yen(day.expenseTotal)}</p>}</div>{route && <p className="mt-2 break-words text-sm font-medium text-teal-800">{route}</p>}{items.length === 0 ? <Empty>この日の情報はまだありません</Empty> : <ol className="relative mt-4 space-y-3 before:absolute before:bottom-6 before:left-[23px] before:top-6 before:w-px before:bg-stone-200">{items.map((item) => <li key={item.key} className="relative">{item.node}</li>)}</ol>}</div>;
+  return <div><div className="flex items-baseline justify-between gap-4"><h3 className="font-bold">{formatDate(day.date)}</h3>{day.expenseTotal > 0 && <p className="text-sm tabular-nums text-stone-500">その他の費用 {yen(day.expenseTotal)}</p>}</div>{route && <p className="mt-2 break-words text-sm font-medium text-teal-800">{route}</p>}{items.length === 0 ? <Empty>この日の情報はまだありません</Empty> : <ol className="relative mt-4 space-y-3 before:absolute before:bottom-6 before:left-[23px] before:top-6 before:w-px before:bg-stone-200">{items.map((item) => <li key={item.key} className="relative">{item.node}</li>)}</ol>}</div>;
 }
 
 function ScheduleItem({ item }: { item: Schedule }) { return <TimelineItem icon={<CalendarIcon />} tone="teal" label="予定" time={item.startTime || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="終了" value={item.endTime} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>; }
@@ -108,7 +108,7 @@ function TransportItem({ item }: { item: Transport }) { return <TimelineItem ico
 function RecordItem({ item }: { item: TripRecord }) {
   const isExpense = item.amount !== null;
   const { hasPhoto } = useRecordPhoto(item.id);
-  const label = isExpense ? "支出" : item.type === "メモ" ? "メモ" : "記録";
+  const label = isExpense ? "その他の費用" : item.type === "メモ" ? "メモ" : "記録";
   if (hasPhoto) return <article className="overflow-hidden rounded-xl border border-stone-200 bg-white"><div className="flex min-h-12 items-center gap-2 px-4 text-xs text-stone-500"><span className="font-bold text-teal-800">{label}</span><span>・</span><span className="tabular-nums">{item.time || "時刻なし"}</span></div><div className="px-3"><RecordPhotoViewer recordId={item.id} alt={`${item.title}の記録写真`} /></div><div className="px-4 pb-4 pt-3"><h4 className="break-words font-bold">{item.title}</h4><DetailLine label="場所" value={item.place} />{item.memo && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-stone-600">{item.memo}</p>}</div></article>;
   return <TimelineItem icon={isExpense ? <WalletIcon /> : <NoteIcon />} tone={isExpense ? "rose" : "stone"} label={label} time={item.time || "時刻なし"} title={item.title}><DetailLine label="場所" value={item.place} /><DetailLine label="金額" value={item.amount === null ? "" : yen(item.amount)} /><DetailLine label="カテゴリー" value={item.expenseCategory} />{item.memo && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-stone-600">{item.memo}</p>}</TimelineItem>;
 }

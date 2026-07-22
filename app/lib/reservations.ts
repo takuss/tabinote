@@ -78,7 +78,7 @@ export function saveReservationWithExpense(item: Reservation, addToExpenses: boo
     title: `${item.name}（予約）`,
     place: "",
     type: recordType,
-    memo: `予約「${item.name}」の支出`,
+    memo: `予約「${item.name}」の費用`,
     amount: item.amount,
     expenseCategory: category,
     paymentMethod: "",

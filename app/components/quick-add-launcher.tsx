@@ -16,7 +16,7 @@ type AddOption = { kind: AddKind; label: string; description: string; icon: Reac
 const ADD_OPTIONS: AddOption[] = [
   { kind: "schedule", label: "予定を追加", description: "行き先と時間をすばやく登録", icon: <CalendarIcon /> },
   { kind: "transport", label: "移動を追加", description: "乗り物と移動経路を登録", icon: <TrainIcon /> },
-  { kind: "expense", label: "支出を追加", description: "旅先で使った金額を記録", icon: <WalletIcon /> },
+  { kind: "expense", label: "その他の費用を追加", description: "必要な費用だけを補足", icon: <WalletIcon /> },
   { kind: "reservation", label: "予約を追加", description: "宿や交通などの予約を登録", icon: <TicketIcon /> },
   { kind: "record", label: "写真・思い出を残す", description: "写真やひとことで旅を記録", icon: <PhotoIcon /> },
 ];
@@ -92,7 +92,7 @@ export default function QuickAddLauncher({ trip, navigationOnly = false, experie
 
   return <section aria-label="クイック追加" className={navigationOnly ? "" : "border-b border-stone-300 py-6"}>
     {!navigationOnly && <div className="flex items-center justify-between gap-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-4 sm:px-5">
-      <div><h2 id="quick-add-heading" className="font-bold">旅の情報を追加</h2><p className="mt-1 text-sm text-stone-600">予定・支出・予約をここからすぐに登録できます</p></div>
+      <div><h2 id="quick-add-heading" className="font-bold">旅の情報を追加</h2><p className="mt-1 text-sm text-stone-600">予定・移動・予約・思い出をすぐに登録できます</p></div>
       <button ref={triggerRef} type="button" onClick={() => { externalTriggerRef.current = null; setIsMenuOpen(true); }} aria-haspopup="dialog" aria-expanded={isMenuOpen} aria-controls="quick-add-sheet" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-teal-700 px-5 text-base font-bold text-white shadow-sm hover:bg-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">＋追加</button>
     </div>}
 
@@ -117,7 +117,7 @@ export default function QuickAddLauncher({ trip, navigationOnly = false, experie
   </section>;
 }
 
-function orderedOptions(experience: "plan" | "today" | "memories") { const order: AddKind[] = experience === "plan" ? ["schedule", "transport", "reservation", "expense", "record"] : ["record", "expense", "schedule", "transport", "reservation"]; return order.map((kind) => ADD_OPTIONS.find((item) => item.kind === kind)!); }
+function orderedOptions(experience: "plan" | "today" | "memories") { const order: AddKind[] = experience === "plan" ? ["schedule", "transport", "reservation", "record", "expense"] : ["record", "schedule", "transport", "reservation", "expense"]; return order.map((kind) => ADD_OPTIONS.find((item) => item.kind === kind)!); }
 
 const iconClass = "size-6";
 function CalendarIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={iconClass}><path d="M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /><path d="M8 13h3v3H8z" /></svg>; }

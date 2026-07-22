@@ -25,8 +25,8 @@ export default function RecordsSections({ trip }: { trip: Trip }) {
       {!isLoaded ? <Empty>記録を読み込んでいます…</Empty> : records.length === 0 ? <EmptyState title="記録はまだありません" description="旅先での出来事やメモを残せます。" /> : <RecordList tripId={tripId} records={records} onDelete={remove} />}</AppCard>
     </section>
     <section aria-labelledby="expenses-heading" className="mt-5"><AppCard>
-      <SectionHeader id="expenses-heading" title="支出" count={summary.count} href={`/trips/${tripId}/records/new`} />
-      {!isLoaded ? <Empty>支出を読み込んでいます…</Empty> : summary.count === 0 ? <EmptyState title="支出はまだありません" description="使った金額を記録すると、合計を確認できます。" /> : <div className="py-5"><p className="text-sm text-stone-500">支出合計</p><p className="mt-1 break-all text-2xl font-bold tabular-nums">{yen(summary.total)}</p><dl className="mt-5 divide-y divide-stone-100">{summary.byCategory.map(({ category, amount }) => <div key={category} className="flex items-center justify-between gap-4 py-3 text-sm"><dt className="min-w-0 break-words">{category}</dt><dd className="shrink-0 font-medium tabular-nums">{yen(amount)}</dd></div>)}</dl></div>}</AppCard>
+      <SectionHeader id="expenses-heading" title="その他の費用" count={summary.count} href={`/trips/${tripId}/records/new`} />
+      {!isLoaded ? <Empty>その他の費用を読み込んでいます…</Empty> : summary.count === 0 ? <EmptyState title="その他の費用はまだありません" description="予約金額や移動運賃以外で、残しておきたい費用だけを追加できます。" /> : <div className="py-5"><p className="text-sm text-stone-500">その他の費用・登録分</p><p className="mt-1 break-all text-2xl font-bold tabular-nums">{yen(summary.total)}</p><dl className="mt-5 divide-y divide-stone-100">{summary.byCategory.map(({ category, amount }) => <div key={category} className="flex items-center justify-between gap-4 py-3 text-sm"><dt className="min-w-0 break-words">{category}</dt><dd className="shrink-0 font-medium tabular-nums">{yen(amount)}</dd></div>)}</dl></div>}</AppCard>
     </section>
   </>;
 }

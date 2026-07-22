@@ -196,7 +196,7 @@ export default function BackupManager() {
             <p className="mt-2 leading-6">
               旅行 {preview.trips}件・予定 {preview.schedules}件・移動{" "}
               {preview.transports}件・予約 {preview.reservations}件・記録{" "}
-              {preview.records}件（支出 {preview.expenses}件）
+              {preview.records}件（その他の費用 {preview.expenses}件）
             </p>
             <p className="mt-2 font-bold">
               現在のデータはすべて置き換えられます。この操作は取り消せません。

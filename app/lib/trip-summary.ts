@@ -1,8 +1,9 @@
-import { sortRecords, summarizeExpenses, type TripRecord } from "@/app/lib/records";
+import { sortRecords, type TripRecord } from "@/app/lib/records";
 import { sortReservations, type Reservation } from "@/app/lib/reservations";
 import { sortSchedules, type Schedule } from "@/app/lib/schedules";
 import type { Trip } from "@/app/lib/trips";
 import { sortTransports, transportDurationMinutes, type Transport } from "@/app/lib/transports";
+import { summarizeMainTravelCosts } from "@/app/lib/travel-costs";
 
 export type TripDaySummary = {
   date: string;
@@ -60,19 +61,6 @@ export function getTripDates(startDate: string, endDate: string) {
 
 export function countUniqueVisitedPlaces(records: TripRecord[]) {
   return new Set(records.map((record) => record.place.trim()).filter(Boolean)).size;
-}
-
-export function getExpenseBreakdown(records: TripRecord[]) {
-  const summary = summarizeExpenses(records);
-  return {
-    total: summary.total,
-    count: summary.count,
-    categories: summary.byCategory.map(({ category, amount }) => ({
-      category,
-      amount,
-      percentage: summary.total > 0 ? Math.round((amount / summary.total) * 100) : 0,
-    })),
-  };
 }
 
 export function groupTripByDay(
@@ -133,7 +121,7 @@ export function buildTripSummary(
       places: countUniqueVisitedPlaces(records),
     },
     days: groupTripByDay(trip, schedules, reservations, records, transports),
-    expenses: getExpenseBreakdown(records),
+    expenses: summarizeMainTravelCosts(reservations, transports, records),
     records: sortRecords(records),
     transports: sortTransports(transports),
     transportMinutes: transports.reduce((sum, item) => sum + (transportDurationMinutes(item) ?? 0), 0),

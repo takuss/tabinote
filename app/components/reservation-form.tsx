@@ -22,7 +22,6 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPeriodWarning, setShowPeriodWarning] = useState(false);
   const [periodConfirmed, setPeriodConfirmed] = useState(false);
-  const [hasAmount, setHasAmount] = useState(reservation?.amount !== null && reservation?.amount !== undefined);
   const isSubmitting = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const detailHref = `/trips/${trip.id}`;
@@ -54,8 +53,7 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
     };
     try {
       isSubmitting.current = true; setSubmitting(true);
-      const addToExpenses = !reservation && data.get("addToExpenses") === "on";
-      const saved = reservation ? updateReservation(reservation.id, next) : (saveReservationWithExpense(next, addToExpenses), true);
+      const saved = reservation ? updateReservation(reservation.id, next) : (saveReservationWithExpense(next, false), true);
       if (!saved) { isSubmitting.current = false; setSubmitting(false); setErrors({ storage: "編集する予約情報が見つかりませんでした。" }); return; }
       router.push(detailHref);
     } catch { isSubmitting.current = false; setSubmitting(false); setErrors({ storage: "予約情報を保存できませんでした。ブラウザの設定を確認してください。" }); }
@@ -80,9 +78,8 @@ export default function ReservationForm({ trip, reservation }: { trip: Trip; res
         <Field label="予約先・会社名" htmlFor="provider"><input id="provider" name="provider" defaultValue={reservation?.provider} placeholder="例：楽天トラベル" className={inputClass} /></Field>
         <Field label="予約番号" htmlFor="confirmationNumber"><input id="confirmationNumber" name="confirmationNumber" defaultValue={reservation?.confirmationNumber} className={inputClass} /></Field>
         <Field label="予約者名" htmlFor="reservedBy"><input id="reservedBy" name="reservedBy" defaultValue={reservation?.reservedBy} className={inputClass} /></Field>
-        <Field label="金額" error={errors.amount} htmlFor="amount"><div className="relative"><input id="amount" name="amount" type="number" inputMode="numeric" min="0" step="1" defaultValue={reservation?.amount ?? ""} onChange={(event) => setHasAmount(event.target.value !== "")} className={`${inputClass} pr-10`} /><span className="absolute bottom-2.5 right-3 text-sm text-stone-500">円</span></div></Field>
+        <Field label="金額" error={errors.amount} htmlFor="amount"><div className="relative"><input id="amount" name="amount" type="number" inputMode="numeric" min="0" step="1" defaultValue={reservation?.amount ?? ""} className={`${inputClass} pr-10`} /><span className="absolute bottom-2.5 right-3 text-sm text-stone-500">円</span></div><p className="mt-1.5 text-xs text-stone-500">入力した金額は主な旅行費用へ自動集計されます。</p></Field>
       </div>
-      {!reservation && <label className={`flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold ${hasAmount ? "cursor-pointer border-teal-200 bg-teal-50 text-stone-800" : "border-stone-200 bg-stone-100 text-stone-400"}`}><input name="addToExpenses" type="checkbox" disabled={!hasAmount} className="size-5 shrink-0 accent-teal-700" /><span>この金額を支出にも追加する</span></label>}
       <Field label="URL" error={errors.url} htmlFor="url"><input id="url" name="url" type="url" defaultValue={reservation?.url} placeholder="https://" className={inputClass} /></Field>
       <Field label="電話番号" htmlFor="phone"><input id="phone" name="phone" type="tel" defaultValue={reservation?.phone} className={inputClass} /></Field>
       <Field label="メモ" htmlFor="memo"><textarea id="memo" name="memo" rows={4} defaultValue={reservation?.memo} placeholder="キャンセル条件や受取方法など" className={`${inputClass} resize-y`} /></Field>

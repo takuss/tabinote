@@ -20,7 +20,6 @@ export default function QuickReservationForm({ trip, onClose, initialDate: prefe
   const [initialDate] = useState(() => getQuickInitialDate(trip, preferredDate));
   const [errors, setErrors] = useState<Errors>({});
   const [type, setType] = useState<ReservationType>("その他");
-  const [hasAmount, setHasAmount] = useState(false);
   const isSubmitting = useRef(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,8 +53,6 @@ export default function QuickReservationForm({ trip, onClose, initialDate: prefe
       setErrors(nextErrors);
       return;
     }
-    const addToExpenses = data.get("quickReservationAddToExpenses") === "on";
-
     const now = new Date().toISOString();
     const reservation: Reservation = {
       ...values,
@@ -68,7 +65,7 @@ export default function QuickReservationForm({ trip, onClose, initialDate: prefe
 
     try {
       isSubmitting.current = true; setSubmitting(true);
-      saveReservationWithExpense(reservation, addToExpenses);
+      saveReservationWithExpense(reservation, false);
       closeForm();
     } catch {
       isSubmitting.current = false; setSubmitting(false);
@@ -86,10 +83,9 @@ export default function QuickReservationForm({ trip, onClose, initialDate: prefe
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         <Field label="利用日" error={errors.date} htmlFor="quickReservationDate"><input id="quickReservationDate" name="quickReservationDate" type="date" min={trip.startDate} max={trip.endDate} defaultValue={initialDate} aria-invalid={Boolean(errors.date)} className={inputClass} /></Field>
         <Field label="時刻" optional htmlFor="quickReservationTime"><input id="quickReservationTime" name="quickReservationTime" type="time" className={inputClass} /></Field>
-        <Field label="金額" optional error={errors.amount} htmlFor="quickReservationAmount"><div className="relative"><input id="quickReservationAmount" name="quickReservationAmount" type="number" inputMode="numeric" min="0" step="1" onChange={(event) => setHasAmount(event.target.value !== "")} aria-invalid={Boolean(errors.amount)} className={`${inputClass} pr-10`} /><span className="absolute bottom-3 right-3 text-sm text-stone-500">円</span></div></Field>
+        <Field label="金額" optional error={errors.amount} htmlFor="quickReservationAmount"><div className="relative"><input id="quickReservationAmount" name="quickReservationAmount" type="number" inputMode="numeric" min="0" step="1" aria-invalid={Boolean(errors.amount)} className={`${inputClass} pr-10`} /><span className="absolute bottom-3 right-3 text-sm text-stone-500">円</span></div><p className="mt-1.5 text-xs font-normal text-stone-500">入力した金額は主な旅行費用へ自動集計されます。</p></Field>
         <Field label="予約URL" optional error={errors.url} htmlFor="quickReservationUrl"><input id="quickReservationUrl" name="quickReservationUrl" type="url" placeholder="https://" aria-invalid={Boolean(errors.url)} className={inputClass} /></Field>
       </div>
-      <label className={`mt-4 flex min-h-12 items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold ${hasAmount ? "cursor-pointer border-teal-200 bg-white text-stone-800" : "border-stone-200 bg-stone-100 text-stone-400"}`}><input name="quickReservationAddToExpenses" type="checkbox" disabled={!hasAmount} className="size-5 shrink-0 accent-teal-700" /><span>この金額を支出にも追加する</span></label>
       <div className="mt-4"><Field label="メモ" optional htmlFor="quickReservationMemo"><textarea id="quickReservationMemo" name="quickReservationMemo" rows={3} placeholder="キャンセル条件など" className={`${inputClass} resize-y`} /></Field></div>
     </details>
     <div className="mt-5 flex gap-3 sm:justify-end"><button type="button" onClick={closeForm} className="min-h-12 flex-1 rounded-xl bg-stone-100 px-4 text-sm font-bold hover:bg-stone-200 sm:flex-none">キャンセル</button><button type="submit" disabled={submitting} aria-busy={submitting} className="min-h-12 flex-[2] rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60 sm:flex-none">{submitting ? "保存中…" : "保存する"}</button></div>

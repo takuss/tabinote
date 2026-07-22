@@ -65,7 +65,7 @@ export default function QuickExpenseForm({ trip, onClose, initialDate }: { trip:
       tripId: trip.id,
       date,
       time,
-      title: `${category}の支出`,
+      title: `${category}の費用`,
       place: "",
       type: toRecordType(category),
       memo,
@@ -81,12 +81,13 @@ export default function QuickExpenseForm({ trip, onClose, initialDate }: { trip:
       saveRecord(record);
       closeForm();
     } catch { submitLock.current = false; setSubmitting(false);
-      setErrors({ storage: "支出を保存できませんでした。ブラウザの設定を確認してください。" });
+      setErrors({ storage: "その他の費用を保存できませんでした。ブラウザの設定を確認してください。" });
     }
   }
 
   return <form onSubmit={handleSubmit} noValidate className="quick-add-form mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">
-    <div className="flex items-center justify-between gap-3"><h3 className="font-bold">支出のクイック追加</h3><span className="text-xs text-stone-500">{initialValues.time} に記録</span></div>
+    <div className="flex items-center justify-between gap-3"><h3 className="font-bold">その他の費用を追加</h3><span className="text-xs text-stone-500">{initialValues.time} に記録</span></div>
+    <p className="mt-2 text-sm leading-6 text-stone-500">細かな買い物まで入力せず、旅全体で把握したい費用だけを残せます。</p>
     {errors.storage && <p role="alert" className="mt-4 border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800">{errors.storage}</p>}
     <div className="mt-4">
       <Field label="金額" error={errors.amount} htmlFor="quickExpenseAmount"><div className="relative"><input id="quickExpenseAmount" name="quickExpenseAmount" type="number" inputMode="numeric" min="0" step="1" autoFocus aria-invalid={Boolean(errors.amount)} className={`${inputClass} pr-10`} /><span className="absolute bottom-3 right-3 text-sm text-stone-500">円</span></div></Field>

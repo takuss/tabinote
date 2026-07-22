@@ -59,8 +59,8 @@ export function validateRecordValues(values: RecordValues, tripStart: string, tr
   else if (values.date < tripStart || values.date > tripEnd) errors.date = "旅行期間内の日付を選択してください。";
   if (!values.title) errors.title = "タイトルを入力してください。";
   if (!RECORD_TYPES.includes(values.type as RecordType)) errors.type = "種類を選択してください。";
-  if (values.amount !== "" && (!Number.isFinite(Number(values.amount)) || Number(values.amount) < 0)) errors.amount = "支出金額は0以上の数値で入力してください。";
-  if (values.amount !== "" && !EXPENSE_CATEGORIES.includes(values.expenseCategory as ExpenseCategory)) errors.expenseCategory = "支出カテゴリを選択してください。";
+  if (values.amount !== "" && (!Number.isFinite(Number(values.amount)) || Number(values.amount) < 0)) errors.amount = "費用は0以上の数値で入力してください。";
+  if (values.amount !== "" && !EXPENSE_CATEGORIES.includes(values.expenseCategory as ExpenseCategory)) errors.expenseCategory = "費用カテゴリーを選択してください。";
   return errors;
 }
 
