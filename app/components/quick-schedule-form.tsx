@@ -95,32 +95,24 @@ export default function QuickScheduleForm({ trip, onClose, initialDate }: { trip
     <form onSubmit={handleSubmit} noValidate className="quick-add-form mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-bold">予定のクイック追加</h3>
-        <span className="text-xs text-stone-500">必須項目は3つだけ</span>
+        <span className="text-xs text-stone-500">名前だけですぐ保存</span>
       </div>
       {errors.storage && <p role="alert" className="mt-4 border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800">{errors.storage}</p>}
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <Field label="日付" error={errors.date} htmlFor="quickDate">
-          <select id="quickDate" name="quickDate" defaultValue={initialValues.date} aria-invalid={Boolean(errors.date)} className={inputClass}>
-            {tripDates.map((date) => <option key={date} value={date}>{formatTripDate(date)}</option>)}
-          </select>
-        </Field>
-        <Field label="開始時刻" error={errors.startTime} htmlFor="quickStartTime">
-          <input id="quickStartTime" name="quickStartTime" type="time" defaultValue={initialValues.startTime} aria-invalid={Boolean(errors.startTime)} className={inputClass} />
-        </Field>
-        <Field label="終了時刻" optional error={errors.endTime} htmlFor="quickEndTime">
-          <input id="quickEndTime" name="quickEndTime" type="time" aria-invalid={Boolean(errors.endTime)} className={inputClass} />
-        </Field>
-      </div>
-
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field label="場所" error={errors.place} htmlFor="quickPlace">
+      <div className="mt-4">
+        <Field label="予定名・場所" error={errors.place} htmlFor="quickPlace">
           <input id="quickPlace" name="quickPlace" type="text" placeholder="例：清水寺" autoFocus aria-invalid={Boolean(errors.place)} className={inputClass} />
         </Field>
-        <Field label="メモ" optional htmlFor="quickMemo">
-          <input id="quickMemo" name="quickMemo" type="text" placeholder="予約情報や補足など" className={inputClass} />
-        </Field>
       </div>
+      <details className="mt-4 rounded-xl bg-white p-3">
+        <summary className="flex min-h-12 cursor-pointer items-center font-bold text-teal-800">日時を変更 <span className="ml-auto text-sm font-normal text-stone-500">{formatShortDate(initialValues.date)} {initialValues.startTime}</span></summary>
+        <div className="mt-3 grid gap-4 sm:grid-cols-3">
+          <Field label="日付" error={errors.date} htmlFor="quickDate"><select id="quickDate" name="quickDate" defaultValue={initialValues.date} aria-invalid={Boolean(errors.date)} className={inputClass}>{tripDates.map((date) => <option key={date} value={date}>{formatTripDate(date)}</option>)}</select></Field>
+          <Field label="開始時刻" error={errors.startTime} htmlFor="quickStartTime"><input id="quickStartTime" name="quickStartTime" type="time" defaultValue={initialValues.startTime} aria-invalid={Boolean(errors.startTime)} className={inputClass} /></Field>
+          <Field label="終了時刻" optional error={errors.endTime} htmlFor="quickEndTime"><input id="quickEndTime" name="quickEndTime" type="time" aria-invalid={Boolean(errors.endTime)} className={inputClass} /></Field>
+        </div>
+        <div className="mt-4"><Field label="メモ" optional htmlFor="quickMemo"><input id="quickMemo" name="quickMemo" type="text" placeholder="予約情報や補足など" className={inputClass} /></Field></div>
+      </details>
 
       <div className="mt-5 flex gap-3 sm:justify-end">
         <button type="button" onClick={cancel} className="min-h-12 flex-1 rounded border border-stone-400 bg-white px-4 text-sm font-bold hover:bg-stone-100 sm:flex-none">キャンセル</button>
@@ -129,6 +121,8 @@ export default function QuickScheduleForm({ trip, onClose, initialDate }: { trip
     </form>
   );
 }
+
+function formatShortDate(date: string) { const [, month, day] = date.split("-").map(Number); return `${month}月${day}日`; }
 
 function Field({ label, optional = false, error, htmlFor, children }: { label: string; optional?: boolean; error?: string; htmlFor: string; children: React.ReactNode }) {
   return <div><label htmlFor={htmlFor} className="text-sm font-bold text-stone-800">{label}<span className={`ml-2 text-xs font-normal ${optional ? "text-stone-500" : "text-red-700"}`}>{optional ? "任意" : "必須"}</span></label>{children}{error && <p role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}</div>;
